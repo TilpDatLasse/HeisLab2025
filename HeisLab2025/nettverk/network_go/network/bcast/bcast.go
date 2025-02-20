@@ -1,11 +1,12 @@
 package bcast
 
 import (
-	"Network-go/network/conn"
 	"encoding/json"
 	"fmt"
 	"net"
 	"reflect"
+
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/conn"
 )
 
 const bufSize = 1024

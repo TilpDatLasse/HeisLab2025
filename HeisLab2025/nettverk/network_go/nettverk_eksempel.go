@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/TilpDatLasse/HeisLab2025/network_go/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/network_go/network/localip"
-	"github.com/TilpDatLasse/HeisLab2025/network_go/network/peers"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/bcast"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/localip"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/peers"
 )
 
 // We define some custom struct to send over the network.
@@ -20,7 +19,7 @@ type HelloMsg struct {
 	Iter    int
 }
 
-func nettverk_hoved() {
+func Nettverk_hoved() {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 	var id string
@@ -49,23 +48,24 @@ func nettverk_hoved() {
 	go peers.Receiver(16000, peerUpdateCh)
 
 	// We make channels for sending and receiving our custom data types
-	helloTx := make(chan HelloMsg)
+	HelloTx := make(chan HelloMsg)
 	helloRx := make(chan HelloMsg)
 	// ... and start the transmitter/receiver pair on some port
 	// These functions can take any number of channels! It is also possible to
 	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(17000, helloTx)
+	go bcast.Transmitter(17000, HelloTx)
 	go bcast.Receiver(17000, helloRx)
 
 	// The example message. We just send one of these every second.
-	go func() {
+	/*go func() {
 		helloMsg := HelloMsg{"Hello from " + id, 0}
 		for {
 			helloMsg.Iter++
-			helloTx <- helloMsg
+			HelloTx <- helloMsg
 			time.Sleep(1 * time.Second)
+
 		}
-	}()
+	}()*/
 
 	fmt.Println("Started")
 	for {
