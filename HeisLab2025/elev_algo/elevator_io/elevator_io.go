@@ -31,17 +31,17 @@ const (
 )
 
 type Elevator struct {
-	floor    int
-	dirn     MotorDirection
-	state    State
-	requests [N_FLOORS][N_BUTTONS]bool
-	config   ElevatorConfig
-	obs      bool
+	Floor    int
+	Dirn     MotorDirection
+	State    State
+	Requests [N_FLOORS][N_BUTTONS]bool
+	Config   ElevatorConfig
+	Obs      bool
 }
 
 type ElevatorConfig struct {
-	clearRequestVariant int
-	doorOpenDurationS   float64
+	ClearRequestVariant int
+	DoorOpenDurationS   float64
 }
 
 // fra elevator_io_device
@@ -53,11 +53,11 @@ type ElevatorInputDevice struct {
 }
 
 type ElevatorOutputDevice struct {
-	floorIndicator     func(int)
-	requestButtonLight func(ButtonType, int, bool)
-	doorLight          func(bool)
-	stopButtonLight    func(bool)
-	motorDirection     func(MotorDirection)
+	FloorIndicator     func(int)
+	RequestButtonLight func(ButtonType, int, bool)
+	DoorLight          func(bool)
+	StopButtonLight    func(bool)
+	MotorDirection     func(MotorDirection)
 }
 
 func Elevio_getInputDevice() ElevatorInputDevice {
@@ -69,7 +69,7 @@ func Elevio_getInputDevice() ElevatorInputDevice {
 	}
 }
 
-func elevio_getOutputDevice() ElevatorOutputDevice {
+func Elevio_getOutputDevice() ElevatorOutputDevice {
 	return ElevatorOutputDevice{
 		floorIndicator:     SetFloorIndicator,
 		requestButtonLight: SetButtonLamp,

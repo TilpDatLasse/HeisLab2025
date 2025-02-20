@@ -16,7 +16,7 @@ var (
 	timerActive  bool
 )
 
-func timer_start(duration float64) {
+func Timer_start(duration float64) {
 	fmt.Println("timer started")
 	go Time(timer_channel)
 	timerEndTime = get_wall_time() + duration
@@ -36,7 +36,7 @@ func Timer_timed_out() bool {
 func Time(reciever chan<- bool) {
 	for {
 
-		if Timer_timed_out() && !elevator.obs {
+		if Timer_timed_out() && !elevator.Obs {
 			reciever <- true
 		}
 
