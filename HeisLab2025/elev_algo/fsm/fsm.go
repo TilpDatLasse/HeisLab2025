@@ -2,8 +2,8 @@ package fsm
 
 import (
 	"fmt"
-	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 
+	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 )
 
 var elevator elev.Elevator
@@ -119,10 +119,6 @@ func Fsm_after_stop() {
 func FlipObs() {
 	elevator.obs = !elevator.obs
 }
-
-
-
-
 
 //fra requests
 

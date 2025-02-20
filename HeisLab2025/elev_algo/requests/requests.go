@@ -2,9 +2,7 @@ package request
 
 import (
 	"fmt"
-
 )
-
 
 func requests_above(e Elevator) bool {
 	for f := e.floor + 1; f < N_FLOORS; f++ {

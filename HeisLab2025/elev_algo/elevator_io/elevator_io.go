@@ -19,9 +19,7 @@ const (
 	N_BUTTONS = 3
 )
 
-
-
-//fra elevator
+// fra elevator
 type State int
 
 const (
@@ -46,8 +44,7 @@ type ElevatorConfig struct {
 	doorOpenDurationS   float64
 }
 
-
-//fra elevator_io_device
+// fra elevator_io_device
 type ElevatorInputDevice struct {
 	FloorSensor   func() int
 	RequestButton func(ButtonType, int) bool
@@ -62,7 +59,6 @@ type ElevatorOutputDevice struct {
 	stopButtonLight    func(bool)
 	motorDirection     func(MotorDirection)
 }
-
 
 func Elevio_getInputDevice() ElevatorInputDevice {
 	return ElevatorInputDevice{
@@ -82,7 +78,6 @@ func elevio_getOutputDevice() ElevatorOutputDevice {
 		motorDirection:     SetMotorDirection,
 	}
 }
-
 
 // opprinnelig i elevator_io
 const _pollRate = 20 * time.Millisecond
@@ -280,5 +275,3 @@ func toBool(a byte) bool {
 	}
 	return b
 }
-
-
