@@ -1,12 +1,15 @@
 package request
 
+/*
 import (
 	"fmt"
+	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
+
 )
 
-func requests_above(e Elevator) bool {
-	for f := e.floor + 1; f < N_FLOORS; f++ {
-		for btn := 0; btn < N_BUTTONS; btn++ {
+func requests_above(e elev.Elevator) bool {
+	for f := e.Floor + 1; f < elev.N_FLOORS; f++ {
+		for btn := 0; btn < elev.N_BUTTONS; btn++ {
 			if e.requests[f][btn] {
 				return true
 			}
@@ -15,9 +18,9 @@ func requests_above(e Elevator) bool {
 	return false
 }
 
-func requests_below(e Elevator) bool {
-	for f := 0; f < e.floor; f++ {
-		for btn := 0; btn < N_BUTTONS; btn++ {
+func requests_below(e elev.Elevator) bool {
+	for f := 0; f < e.Floor; f++ {
+		for btn := 0; btn < elev.N_BUTTONS; btn++ {
 			if e.requests[f][btn] {
 				return true
 			}
@@ -26,25 +29,25 @@ func requests_below(e Elevator) bool {
 	return false
 }
 
-func requests_here(e Elevator) bool {
-	for btn := 0; btn < N_BUTTONS; btn++ {
-		if e.requests[e.floor][btn] {
+func requests_here(e elev.Elevator) bool {
+	for btn := 0; btn < elev.N_BUTTONS; btn++ {
+		if e.requests[e.Floor][btn] {
 			return true
 		}
 	}
 	return false
 }
 
-func requests_chooseDirection(e Elevator) (MotorDirection, State) {
+func requests_chooseDirection(e elev.Elevator) (elev.MotorDirection, elev.State) {
 	fmt.Println("chooseDir")
 	switch e.dirn {
-	case MD_Up:
+	case elev.MD_Up:
 		if requests_above(e) {
-			return MD_Up, MOVE
+			return elev.MD_Up, elev.MOVE
 		} else if requests_here(e) {
-			return MD_Down, DOOROPEN
+			return elev.MD_Down, elev.DOOROPEN
 		} else if requests_below(e) {
-			return MD_Down, MOVE
+			return elev.MD_Down, elev.MOVE
 		}
 	case MD_Down:
 		if requests_below(e) {
@@ -69,9 +72,9 @@ func requests_chooseDirection(e Elevator) (MotorDirection, State) {
 func requests_shouldStop(e Elevator) bool {
 	switch e.dirn {
 	case MD_Down:
-		return e.requests[e.floor][B_HallDown] || e.requests[e.floor][B_Cab] || !requests_below(e)
+		return e.requests[e.Floor][B_HallDown] || e.requests[e.Floor][B_Cab] || !requests_below(e)
 	case MD_Up:
-		return e.requests[e.floor][B_HallUp] || e.requests[e.floor][B_Cab] || !requests_above(e)
+		return e.requests[e.Floor][B_HallUp] || e.requests[e.Floor][B_Cab] || !requests_above(e)
 	default:
 		return true
 	}
@@ -121,4 +124,4 @@ func requests_clearAtCurrentFloor(e Elevator) Elevator {
 		}
 	}
 	return e
-}
+} */

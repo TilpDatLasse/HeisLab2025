@@ -71,11 +71,11 @@ func Elevio_getInputDevice() ElevatorInputDevice {
 
 func Elevio_getOutputDevice() ElevatorOutputDevice {
 	return ElevatorOutputDevice{
-		floorIndicator:     SetFloorIndicator,
-		requestButtonLight: SetButtonLamp,
-		doorLight:          SetDoorOpenLamp,
-		stopButtonLight:    SetStopLamp,
-		motorDirection:     SetMotorDirection,
+		FloorIndicator:     SetFloorIndicator,
+		RequestButtonLight: SetButtonLamp,
+		DoorLight:          SetDoorOpenLamp,
+		StopButtonLight:    SetStopLamp,
+		MotorDirection:     SetMotorDirection,
 	}
 }
 

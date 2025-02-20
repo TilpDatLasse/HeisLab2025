@@ -117,6 +117,10 @@ func Fsm_after_stop() {
 
 }
 
+func GetObs() bool {
+	return elevator.Obs
+}
+
 func FlipObs() {
 	elevator.Obs = !elevator.Obs
 }

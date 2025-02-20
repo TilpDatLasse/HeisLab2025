@@ -3,6 +3,8 @@ package timer
 import (
 	"fmt"
 	"time"
+
+	"github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 )
 
 var timer_channel = make(chan bool)
@@ -36,7 +38,7 @@ func Timer_timed_out() bool {
 func Time(reciever chan<- bool) {
 	for {
 
-		if Timer_timed_out() && !elevator.Obs {
+		if Timer_timed_out() && !elevator_io.GetObstruction() {
 			reciever <- true
 		}
 
