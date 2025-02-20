@@ -1,4 +1,4 @@
-package annet
+package elevator_io
 
 import (
 	"fmt"
@@ -7,6 +7,84 @@ import (
 	"time"
 )
 
+const (
+	B_HallUp   = 0
+	B_HallDown = 1
+	B_Cab      = 2
+
+	CV_All    = 0
+	CV_InDirn = 1
+
+	N_FLOORS  = 4
+	N_BUTTONS = 3
+)
+
+
+
+//fra elevator
+type State int
+
+const (
+	INIT     State = 0
+	IDLE           = 1
+	MOVE           = 2
+	STOP           = 3
+	DOOROPEN       = 4
+)
+
+type Elevator struct {
+	floor    int
+	dirn     MotorDirection
+	state    State
+	requests [N_FLOORS][N_BUTTONS]bool
+	config   ElevatorConfig
+	obs      bool
+}
+
+type ElevatorConfig struct {
+	clearRequestVariant int
+	doorOpenDurationS   float64
+}
+
+
+//fra elevator_io_device
+type ElevatorInputDevice struct {
+	FloorSensor   func() int
+	RequestButton func(ButtonType, int) bool
+	stopButton    func() bool
+	obstruction   func() bool
+}
+
+type ElevatorOutputDevice struct {
+	floorIndicator     func(int)
+	requestButtonLight func(ButtonType, int, bool)
+	doorLight          func(bool)
+	stopButtonLight    func(bool)
+	motorDirection     func(MotorDirection)
+}
+
+
+func Elevio_getInputDevice() ElevatorInputDevice {
+	return ElevatorInputDevice{
+		FloorSensor:   GetFloor,
+		RequestButton: GetButton,
+		stopButton:    GetStop,
+		obstruction:   GetObstruction,
+	}
+}
+
+func elevio_getOutputDevice() ElevatorOutputDevice {
+	return ElevatorOutputDevice{
+		floorIndicator:     SetFloorIndicator,
+		requestButtonLight: SetButtonLamp,
+		doorLight:          SetDoorOpenLamp,
+		stopButtonLight:    SetStopLamp,
+		motorDirection:     SetMotorDirection,
+	}
+}
+
+
+// opprinnelig i elevator_io
 const _pollRate = 20 * time.Millisecond
 
 var _initialized bool = false
@@ -203,6 +281,4 @@ func toBool(a byte) bool {
 	return b
 }
 
-func FlipObs() {
-	elevator.obs = !elevator.obs
-}
+

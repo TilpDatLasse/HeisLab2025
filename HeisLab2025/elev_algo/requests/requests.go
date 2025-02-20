@@ -1,20 +1,10 @@
-package annet
+package request
 
 import (
 	"fmt"
+
 )
 
-const (
-	B_HallUp   = 0
-	B_HallDown = 1
-	B_Cab      = 2
-
-	CV_All    = 0
-	CV_InDirn = 1
-
-	N_FLOORS  = 4
-	N_BUTTONS = 3
-)
 
 func requests_above(e Elevator) bool {
 	for f := e.floor + 1; f < N_FLOORS; f++ {

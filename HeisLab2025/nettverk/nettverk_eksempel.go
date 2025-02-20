@@ -1,13 +1,13 @@
-package network_go
+package nettverk
 
 import (
 	"flag"
 	"fmt"
 	"os"
 
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/localip"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/peers"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
 )
 
 // We define some custom struct to send over the network.

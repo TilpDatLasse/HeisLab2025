@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/annet"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/bcast"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 )
 
 func Elevator_hoved() {
@@ -26,7 +26,7 @@ func Elevator_hoved() {
 	drv_obstr := make(chan bool)
 	drv_stop := make(chan bool)
 	timer_channel := make(chan bool)
-	ch := make(chan network_go.HelloMsg)
+	ch := make(chan nettverk.HelloMsg)
 
 	go annet.PollButtons(drv_buttons)
 	go annet.PollFloorSensor(drv_floors)
@@ -39,7 +39,7 @@ func Elevator_hoved() {
 		select {
 		case a := <-drv_buttons:
 			annet.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
-			helloMsg := network_go.HelloMsg{"Transmitting" + "2", a.Floor}
+			helloMsg := nettverk.HelloMsg{"Transmitting" + "2", a.Floor}
 			ch <- helloMsg
 		case a := <-drv_floors:
 			annet.Fsm_onFloorArrival(a)

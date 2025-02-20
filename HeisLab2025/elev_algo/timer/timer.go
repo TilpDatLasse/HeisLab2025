@@ -1,4 +1,4 @@
-package annet
+package timer
 
 import (
 	"fmt"

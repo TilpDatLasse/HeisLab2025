@@ -6,7 +6,7 @@ import (
 	"net"
 	"reflect"
 
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network_go/network/conn"
+	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/conn"
 )
 
 const bufSize = 1024
