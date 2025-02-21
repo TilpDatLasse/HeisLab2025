@@ -48,12 +48,12 @@ func Nettverk_hoved() {
 	go peers.Receiver(16000, peerUpdateCh)
 
 	// We make channels for sending and receiving our custom data types
-	HelloTx := make(chan HelloMsg)
+	//HelloTx := make(chan HelloMsg)
 	helloRx := make(chan HelloMsg)
 	// ... and start the transmitter/receiver pair on some port
 	// These functions can take any number of channels! It is also possible to
 	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(17000, HelloTx)
+	//go bcast.Transmitter(17000, HelloTx)
 	go bcast.Receiver(17000, helloRx)
 
 	// The example message. We just send one of these every second.

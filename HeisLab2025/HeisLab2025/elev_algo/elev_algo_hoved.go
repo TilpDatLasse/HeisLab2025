@@ -3,63 +3,64 @@ package elev_algo
 import (
 	"fmt"
 
-	"github.com/TilpDatLasse/HeisLab2025/elev_algo/annet"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
+	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
+	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 )
 
 func Elevator_hoved() {
 	fmt.Println("Started!")
 
-	annet.Init("localhost:15657", annet.N_FLOORS)
+	elev.Init("localhost:15657", elev.N_FLOORS)
 
-	annet.Fsm_init()
+	fsm.Fsm_init()
 
-	input := annet.Elevio_getInputDevice()
+	input := elev.Elevio_getInputDevice()
 
 	if input.FloorSensor() == -1 {
-		annet.Fsm_onInitBetweenFloors()
+		fsm.Fsm_onInitBetweenFloors()
 	}
 
-	drv_buttons := make(chan annet.ButtonEvent)
+	drv_buttons := make(chan elev.ButtonEvent)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
 	drv_stop := make(chan bool)
 	timer_channel := make(chan bool)
-	ch := make(chan nettverk.HelloMsg)
+	ch := make(chan elev.ButtonEvent)
 
-	go annet.PollButtons(drv_buttons)
-	go annet.PollFloorSensor(drv_floors)
-	go annet.PollObstructionSwitch(drv_obstr)
-	go annet.PollStopButton(drv_stop)
-	go annet.Time(timer_channel)
+	go elev.PollButtons(drv_buttons)
+	go elev.PollFloorSensor(drv_floors)
+	go elev.PollObstructionSwitch(drv_obstr)
+	go elev.PollStopButton(drv_stop)
+	go timer.Time(timer_channel)
 	go bcast.Transmitter(17000, ch)
 
 	for {
 		select {
 		case a := <-drv_buttons:
-			annet.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
-			helloMsg := nettverk.HelloMsg{"Transmitting" + "2", a.Floor}
-			ch <- helloMsg
+			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
+			orderMsg := a
+			ch <- orderMsg
 		case a := <-drv_floors:
-			annet.Fsm_onFloorArrival(a)
+			fsm.Fsm_onFloorArrival(a)
 
 		case a := <-timer_channel:
-			annet.Timer_stop()
+			timer.Timer_stop()
 			fmt.Println(a)
-			annet.Fsm_onDoorTimeout()
+			fsm.Fsm_onDoorTimeout()
 
 		case a := <-drv_obstr:
 			fmt.Println(a)
-			annet.FlipObs()
+			fsm.FlipObs()
 
 		case a := <-drv_stop:
 
 			if a {
-				annet.Fsm_stop()
+				fsm.Fsm_stop()
 			}
 			if !a {
-				annet.Fsm_after_stop()
+				fsm.Fsm_after_stop()
 
 			}
 		}
