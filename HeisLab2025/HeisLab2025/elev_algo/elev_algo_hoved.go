@@ -6,6 +6,8 @@ import (
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
+
+	//"github.com/TilpDatLasse/HeisLab2025/nettverk"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 )
 
@@ -27,21 +29,27 @@ func Elevator_hoved() {
 	drv_obstr := make(chan bool)
 	drv_stop := make(chan bool)
 	timer_channel := make(chan bool)
-	ch := make(chan elev.ButtonEvent)
+	buttonTx := make(chan elev.ButtonEvent)
+	buttonRx := make(chan elev.ButtonEvent)
 
 	go elev.PollButtons(drv_buttons)
 	go elev.PollFloorSensor(drv_floors)
 	go elev.PollObstructionSwitch(drv_obstr)
 	go elev.PollStopButton(drv_stop)
 	go timer.Time(timer_channel)
-	go bcast.Transmitter(17000, ch)
+	go bcast.Transmitter(17000, buttonTx)
+	go bcast.Receiver(17000, buttonRx)
 
 	for {
 		select {
 		case a := <-drv_buttons:
 			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
 			orderMsg := a
-			ch <- orderMsg
+			buttonTx <- orderMsg
+
+		case a := <-buttonRx:
+			fmt.Printf("Received: %#v\n", a)
+			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
 		case a := <-drv_floors:
 			fsm.Fsm_onFloorArrival(a)
 

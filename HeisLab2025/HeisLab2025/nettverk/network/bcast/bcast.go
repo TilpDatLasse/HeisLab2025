@@ -48,6 +48,7 @@ func Transmitter(port int, chans ...interface{}) {
 // Matches type-tagged JSON received on `port` to element types of `chans`, then
 // sends the decoded value on the corresponding channel
 func Receiver(port int, chans ...interface{}) {
+	fmt.Println("Kjører receiver")
 	checkArgs(chans...)
 	chansMap := make(map[string]interface{})
 	for _, ch := range chans {
