@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 )
 
@@ -25,7 +26,14 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-func BroadcastElevatorStatus(ch_HRAInputTx chan HRAInput) {
+func BroadcastElevatorStatus(ch_HRAInputTx chan HRAInput, statusElev chan elev.Elevator) {
+	/*	rawInput := <-statusElev
+
+		input := HRAInput{
+			HallRequests: [][2]bool{{false, false}, {true, false}, {false, false}, {false, true}},
+			}
+	*/
+
 	b.Transmitter(18000, ch_HRAInputTx)
 	fmt.Println("yo")
 }
@@ -35,51 +43,46 @@ func RecieveElevatorStatus(ch_HRAInputRx chan HRAInput) {
 
 }
 
-func HRAMain(ch_HRAInputTx chan HRAInput, ch_HRAInputRx chan HRAInput, change_ch chan bool) {
+func HRAMain(ch_HRAInputTx chan HRAInput, ch_HRAInputRx chan HRAInput, change_ch chan bool, ElevatorStatusCh chan elev.Elevator) {
 	go RecieveElevatorStatus(ch_HRAInputRx)
-	go BroadcastElevatorStatus(ch_HRAInputRx)
+	go BroadcastElevatorStatus(ch_HRAInputRx, ElevatorStatusCh)
 
-	//dette er bare et eksempel på input, skal egt hente fra en kanal
-	input := HRAInput{
-		HallRequests: [][2]bool{{false, false}, {true, false}, {false, false}, {false, true}},
-		States: map[string]HRAElevState{
-			"one": HRAElevState{
-				Behavior:    "moving",
-				Floor:       2,
-				Direction:   "up",
-				CabRequests: []bool{false, false, false, true},
+	/*
+		//dette er bare et eksempel på input, skal egt hente fra en kanal
+		input := HRAInput{
+			HallRequests: [][2]bool{{false, false}, {true, false}, {false, false}, {false, true}},
+			States: map[string]HRAElevState{
+				"one": HRAElevState{
+					Behavior:    "moving",
+					Floor:       2,
+					Direction:   "up",
+					CabRequests: []bool{false, false, false, true},
+				},
+				"two": HRAElevState{
+					Behavior:    "idle",
+					Floor:       0,
+					Direction:   "stop",
+					CabRequests: []bool{false, false, false, false},
+				},
 			},
-			"two": HRAElevState{
-				Behavior:    "idle",
-				Floor:       0,
-				Direction:   "stop",
-				CabRequests: []bool{false, false, false, false},
-			},
-		},
-	}
-
-	for {
-		select {
-		case a := <-change_ch:
-			fmt.Println(a, "change")
-			HRA(input, ch_HRAInputTx)
-		case a := <-ch_HRAInputRx:
-			HRA(a, ch_HRAInputTx)
 		}
-	}
-}
 
-func HRA(input HRAInput, ch_HRAInputTx chan HRAInput) {
+		for {
+			select {
+			case a := <-change_ch:
+				fmt.Println(a, "change")
+				HRA(input, ch_HRAInputTx)
+			case a := <-ch_HRAInputRx:
+				HRA(a, ch_HRAInputTx)
+			}
+		}*/
+
 	fmt.Println("kjører HRA")
 	hraExecutable := "hall_request_assigner"
 
-	ch_HRAInputTx <- input // FEIL:  blokkerer her fordi vi ikke leser kanalen med en gang
-	fmt.Println("1")
-	BroadcastElevatorStatus(ch_HRAInputTx)
-
 	fmt.Println("2")
 
-	jsonBytes, err := json.Marshal(input)
+	jsonBytes, err := json.Marshal( /*input*/ )
 	if err != nil {
 		fmt.Println("json.Marshal error: ", err)
 		return

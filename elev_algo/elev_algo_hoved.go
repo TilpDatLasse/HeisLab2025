@@ -37,7 +37,7 @@ func Elevator_hoved(buttonTx chan elev.ButtonEvent, buttonRx chan elev.ButtonEve
 	for {
 		select {
 		case a := <-drv_buttons:
-			
+
 			if a.Button != elev.BT_Cab {
 				buttonTx <- a
 			} else {

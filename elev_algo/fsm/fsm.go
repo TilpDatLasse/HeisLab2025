@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"fmt"
+	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -9,6 +10,11 @@ import (
 
 var elevator elev.Elevator
 var outputDevice elev.ElevatorOutputDevice
+
+func FetchElevatorStatus(channel chan elev.Elevator) {
+	channel <- elevator
+	time.Sleep(1000 * time.Millisecond)
+}
 
 func Fsm_init() {
 	elevator = elev.Elevator{}
