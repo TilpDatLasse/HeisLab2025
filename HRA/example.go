@@ -18,6 +18,8 @@ type HRAElevState struct {
 	CabRequests []bool `json:"cabRequests"`
 }
 
+// heihei
+
 type HRAInput struct {
 	HallRequests [][2]bool               `json:"hallRequests"`
 	States       map[string]HRAElevState `json:"states"`
