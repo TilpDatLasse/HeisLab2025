@@ -35,6 +35,7 @@ func RecieveElevatorStatus(ch_HRAInputRx chan HRAInput) {
 
 func HRAMain(ch_HRAInputTx chan HRAInput, ch_HRAInputRx chan HRAInput, change_ch chan bool) {
 	go RecieveElevatorStatus(ch_HRAInputRx)
+	go BroadcastElevatorStatus(ch_HRAInputRx)
 
 	//dette er bare et eksempel på input, skal egt hente fra en kanal
 	input := HRAInput{
