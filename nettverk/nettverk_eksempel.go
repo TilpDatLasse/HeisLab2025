@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
+	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
+	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
 )
@@ -15,12 +17,62 @@ import (
 // Note that all members we want to transmit must be public. Any private members
 //
 //	will be received as zero-values.
+
+type ConfirmationState int
+
+const (
+	no_call      ConfirmationState = 0
+	unregistered ConfirmationState = 1
+	registered   ConfirmationState = 2
+)
+
 type HelloMsg struct {
 	Message string
 	Iter    int
 }
 
-func Nettverk_hoved(buttonTx chan elev.ButtonEvent, buttonRx chan elev.ButtonEvent, buttonRx1 chan elev.ButtonEvent) {
+type HRAElevState struct {
+	Behavior    string `json:"behaviour"`
+	Floor       int    `json:"floor"`
+	Direction   string `json:"direction"`
+	CabRequests []bool `json:"cabRequests"`
+}
+
+// heihei
+
+type HRAInput struct {
+	HallRequests [][2]bool               `json:"hallRequests"`
+	States       map[string]HRAElevState `json:"states"`
+	confirmation [][2]ConfirmationState
+}
+
+func SetElevatorStatus(ch_HRAInputTx chan HRAInput) {
+	for {
+		ch_HRAInputTx <- Converter(fsm.FetchElevatorStatus())
+		time.Sleep(1000 * time.Millisecond)
+	}
+
+}
+
+func BroadcastElevatorStatus(ch_HRAInputTx chan HRAInput, statusElev chan elev.Elevator) {
+	for {
+
+		fmt.Println("yo1")
+		b.Transmitter(14000, ch_HRAInputTx)
+		fmt.Println("yo")
+
+	}
+}
+
+func RecieveElevatorStatus(ch_HRAInputRx chan HRAInput) {
+	for {
+		fmt.Println("kjører recieved status")
+		b.Receiver(14000, ch_HRAInputRx)
+	}
+}
+
+func Nettverk_hoved(ch_HRAInputRx chan HRAInput) {
+
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 	var id string
@@ -54,8 +106,8 @@ func Nettverk_hoved(buttonTx chan elev.ButtonEvent, buttonRx chan elev.ButtonEve
 	// ... and start the transmitter/receiver pair on some port
 	// These functions can take any number of channels! It is also possible to
 	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(17000, buttonTx)
-	go bcast.Receiver(17000, buttonRx)
+	//go b.Transmitter(17000, bustatusElevttonTx)
+	//go b.Receiver(17000, buttonRx)
 
 	// The example message. We just send one of these every second.
 	/*go func() {
@@ -65,7 +117,7 @@ func Nettverk_hoved(buttonTx chan elev.ButtonEvent, buttonRx chan elev.ButtonEve
 			HelloTx <- helloMsg
 			time.Sleep(1 * time.Second)
 
-		}
+		}BroadcastElevatorStatus
 	}()*/
 
 	fmt.Println("Started")
@@ -77,10 +129,40 @@ func Nettverk_hoved(buttonTx chan elev.ButtonEvent, buttonRx chan elev.ButtonEve
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-buttonRx:
-			buttonRx1 <- a
-			fmt.Printf("Received: %#v\n", a)
-
+		//case a := <-buttonRx:
+		//buttonRx1 <- a
+		//fmt.Printf("Received: %#v\n", a)
+		case a := <-ch_HRAInputRx:
+			fmt.Println("Reicievd status", a.States["one"].Floor)
 		}
 	}
+}
+
+func Converter(e elev.Elevator) HRAInput {
+	fmt.Println("converting")
+	rawInput := e
+	hallRequests := make([][2]bool, len(rawInput.Requests))
+	cabRequests := make([]bool, len(rawInput.Requests))
+
+	for i := 0; i < len(rawInput.Requests); i++ {
+		hallRequests[i] = [2]bool{rawInput.Requests[i][0], rawInput.Requests[i][1]}
+		cabRequests[i] = rawInput.Requests[i][2]
+	}
+
+	fmt.Println("raw:", hallRequests[1][1])
+
+	input := HRAInput{
+		HallRequests: hallRequests,
+		States: map[string]HRAElevState{
+			"one": HRAElevState{
+				Behavior:    string(rawInput.State),
+				Floor:       rawInput.Floor,
+				Direction:   string(rawInput.Dirn),
+				CabRequests: cabRequests,
+			},
+		},
+	}
+
+	return input
+
 }

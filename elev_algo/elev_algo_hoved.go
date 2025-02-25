@@ -9,7 +9,7 @@ import (
 	//"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
-func Elevator_hoved(buttonTx chan elev.ButtonEvent, buttonRx chan elev.ButtonEvent, change_ch chan bool) {
+func Elevator_hoved() {
 	fmt.Println("Started!")
 
 	elev.Init("localhost:15657", elev.N_FLOORS)
@@ -38,14 +38,6 @@ func Elevator_hoved(buttonTx chan elev.ButtonEvent, buttonRx chan elev.ButtonEve
 		select {
 		case a := <-drv_buttons:
 
-			if a.Button != elev.BT_Cab {
-				buttonTx <- a
-			} else {
-				fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
-			}
-			change_ch <- true
-
-		case a := <-buttonRx:
 			fmt.Printf("Received for call: %#v\n", a)
 			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
 
