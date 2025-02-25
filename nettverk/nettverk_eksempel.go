@@ -13,6 +13,9 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
 )
 
+var ID string
+var InfoMap = make(map[string]InformationElev)
+
 // We define some custom struct to send over the network.
 // Note that all members we want to transmit must be public. Any private members
 //
@@ -40,38 +43,44 @@ type HRAElevState struct {
 
 // heihei
 
-type HRAInput struct {
-	HallRequests [][2]bool               `json:"hallRequests"`
-	States       map[string]HRAElevState `json:"states"`
+type InformationElev struct {
+	State        HRAElevState
+	HallRequests [][2]bool
+	ID           string
 	confirmation [][2]ConfirmationState
 }
 
-func SetElevatorStatus(ch_HRAInputTx chan HRAInput) {
+type HRAInput struct {
+	HallRequests [][2]bool               `json:"hallRequests"`
+	States       map[string]HRAElevState `json:"states"`
+}
+
+func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
-		ch_HRAInputTx <- Converter(fsm.FetchElevatorStatus())
+		info := Converter(fsm.FetchElevatorStatus())
+		info.ID = ID
+		ch_HRAInputTx <- info
 		time.Sleep(1000 * time.Millisecond)
 	}
 
 }
 
-func BroadcastElevatorStatus(ch_HRAInputTx chan HRAInput, statusElev chan elev.Elevator) {
+func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev, statusElev chan elev.Elevator) {
 	for {
 
-		fmt.Println("yo1")
 		b.Transmitter(14000, ch_HRAInputTx)
-		fmt.Println("yo")
 
 	}
 }
 
-func RecieveElevatorStatus(ch_HRAInputRx chan HRAInput) {
+func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 	for {
-		fmt.Println("kjører recieved status")
+		//fmt.Println("kjører recieved status")
 		b.Receiver(14000, ch_HRAInputRx)
 	}
 }
 
-func Nettverk_hoved(ch_HRAInputRx chan HRAInput) {
+func Nettverk_hoved(ch_HRAInputRx chan InformationElev) {
 
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
@@ -90,6 +99,7 @@ func Nettverk_hoved(ch_HRAInputRx chan HRAInput) {
 		}
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
+	ID = id
 
 	// We make a channel for receiving updates on the id's of the peers that are
 	//  alive on the network
@@ -133,13 +143,14 @@ func Nettverk_hoved(ch_HRAInputRx chan HRAInput) {
 		//buttonRx1 <- a
 		//fmt.Printf("Received: %#v\n", a)
 		case a := <-ch_HRAInputRx:
-			fmt.Println("Reicievd status", a.States["one"].Floor)
+			InfoMap[a.ID] = a
+			fmt.Println("Reicievd status", a.State.Floor, "from peer ", a.ID)
 		}
 	}
 }
 
-func Converter(e elev.Elevator) HRAInput {
-	fmt.Println("converting")
+func Converter(e elev.Elevator) InformationElev {
+	//fmt.Println("converting")
 	rawInput := e
 	hallRequests := make([][2]bool, len(rawInput.Requests))
 	cabRequests := make([]bool, len(rawInput.Requests))
@@ -149,17 +160,16 @@ func Converter(e elev.Elevator) HRAInput {
 		cabRequests[i] = rawInput.Requests[i][2]
 	}
 
-	fmt.Println("raw:", hallRequests[1][1])
+	//fmt.Println("raw:", hallRequests[1][1])
 
-	input := HRAInput{
+	input := InformationElev{
 		HallRequests: hallRequests,
-		States: map[string]HRAElevState{
-			"one": HRAElevState{
-				Behavior:    string(rawInput.State),
-				Floor:       rawInput.Floor,
-				Direction:   string(rawInput.Dirn),
-				CabRequests: cabRequests,
-			},
+		State: HRAElevState{
+
+			Behavior:    string(rawInput.State),
+			Floor:       rawInput.Floor,
+			Direction:   string(rawInput.Dirn),
+			CabRequests: cabRequests,
 		},
 	}
 

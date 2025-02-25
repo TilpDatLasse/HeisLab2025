@@ -38,7 +38,7 @@ func Elevator_hoved() {
 		select {
 		case a := <-drv_buttons:
 
-			fmt.Printf("Received for call: %#v\n", a)
+			//fmt.Printf("Received for call: %#v\n", a)
 			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
 
 		case a := <-drv_floors:

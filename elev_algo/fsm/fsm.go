@@ -14,7 +14,7 @@ var outputDevice elev.ElevatorOutputDevice
 func FetchElevatorStatus() elev.Elevator {
 
 	//channel <- elevator
-	fmt.Println("sender fra fetching", elevator.Requests[1][1])
+	//fmt.Println("sender fra fetching", elevator.Requests[1][1])
 
 	return elevator
 
@@ -47,8 +47,8 @@ func Fsm_onInitBetweenFloors() {
 }
 
 func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
-	fmt.Printf("\n\nRequestButtonPress(%d, %d)\n", btnFloor, btnType)
-	fmt.Printf("state(%d)", elevator.State)
+	//fmt.Printf("\n\nRequestButtonPress(%d, %d)\n", btnFloor, btnType)
+	//fmt.Printf("state(%d)", elevator.State)
 
 	switch elevator.State {
 	case elev.DOOROPEN:
@@ -97,7 +97,7 @@ func Fsm_onFloorArrival(newFloor int) {
 }
 
 func Fsm_onDoorTimeout() {
-	fmt.Println("\n\nDoorTimeout()")
+	//fmt.Println("\n\nDoorTimeout()")
 
 	if elevator.State == elev.DOOROPEN {
 		dirn, behaviour := requests_chooseDirection(elevator)
@@ -169,7 +169,7 @@ func requests_here(e elev.Elevator) bool {
 }
 
 func requests_chooseDirection(e elev.Elevator) (elev.MotorDirection, elev.State) {
-	fmt.Println("chooseDir")
+	//fmt.Println("chooseDir")
 	switch e.Dirn {
 	case elev.MD_Up:
 		if requests_above(e) {
@@ -229,12 +229,12 @@ func requests_shouldClearImmediately(e elev.Elevator, btn_floor int, btn_type in
 func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 	switch e.Config.ClearRequestVariant {
 	case elev.CV_All:
-		fmt.Println("All")
+		//fmt.Println("All")
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
 			e.Requests[e.Floor][btn] = false
 		}
 	case elev.CV_InDirn:
-		fmt.Println("InDirn")
+		//fmt.Println("InDirn")
 		e.Requests[e.Floor][elev.B_Cab] = false
 		switch e.Dirn {
 		case elev.MD_Up:
