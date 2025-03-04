@@ -39,9 +39,11 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 	fmt.Println("kjører HRA")
 	hraExecutable := "hall_request_assigner"
 
-	fmt.Println("2")
+	fmt.Println("InfoMp: ", nettverk.InfoMap)
 
 	for {
+
+		time.Sleep(4000 * time.Millisecond)
 		/*
 			// Lager en slice for å lagre nøklene
 			var keys []string
@@ -81,7 +83,6 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 		}
 
 		if len(nettverk.InfoMap) > 0 {
-
 			jsonBytes, err := json.Marshal(input)
 			if err != nil {
 				fmt.Println("json.Marshal error: ", err)
@@ -101,15 +102,13 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 				fmt.Println("json.Unmarshal error: ", err)
 				return
 			}
-			out := *output
-			HRAOut <- out
+			//HRAOut <- *output
 			fmt.Printf("output: \n")
 			for k, v := range *output {
 				fmt.Printf("%6v :  %+v\n", k, v)
 			}
 		}
 		//fmt.Println(input.States["one"].Floor)
-		time.Sleep(2500 * time.Millisecond)
 
 	}
 
