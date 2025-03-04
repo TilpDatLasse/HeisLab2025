@@ -80,6 +80,10 @@ func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
 	setAllLights(elevator)
 }
 
+func Fsm_OrderInList(f int, d int) {
+
+}
+
 func Fsm_onFloorArrival(newFloor int) {
 	fmt.Printf("\n\nFloorArrival(%d)\n", newFloor)
 

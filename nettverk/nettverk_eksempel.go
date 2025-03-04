@@ -55,7 +55,6 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
 		info := Converter(fsm.FetchElevatorStatus())
@@ -179,7 +178,7 @@ func Converter(e elev.Elevator) InformationElev {
 
 }
 
-func stateToString (s elev.State) string {
+func stateToString(s elev.State) string {
 	switch s {
 	case elev.IDLE:
 		return "idle"
@@ -190,11 +189,11 @@ func stateToString (s elev.State) string {
 	case elev.STOP:
 		return "doorOpen"
 	default:
-		return "unknown" // Håndterer udefinerte verdier
+		return "idle" // Håndterer udefinerte verdier
 	}
 }
 
-func dirnToString (s elev.MotorDirection) string {
+func dirnToString(s elev.MotorDirection) string {
 	switch s {
 	case elev.MD_Up:
 		return "up"
@@ -204,5 +203,14 @@ func dirnToString (s elev.MotorDirection) string {
 		return "stop"
 	default:
 		return "unknown" // Håndterer udefinerte verdier
+	}
+}
+
+func FromHRA(ch_HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
+	output := <-ch_HRAOut
+	for k, v := range output {
+		if k == ID {
+			ch_elevator_queue <- v
+		}
 	}
 }

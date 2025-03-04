@@ -9,7 +9,7 @@ import (
 	//"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
-func Elevator_hoved() {
+func Elevator_hoved(ch_single_elev_queue chan [][2]bool) {
 	fmt.Println("Started!")
 
 	elev.Init("localhost:15657", elev.N_FLOORS)
@@ -37,9 +37,9 @@ func Elevator_hoved() {
 	for {
 		select {
 		case a := <-drv_buttons:
+			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
 
 			//fmt.Printf("Received for call: %#v\n", a)
-			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
 
 		case a := <-drv_floors:
 			fsm.Fsm_onFloorArrival(a)
@@ -60,6 +60,13 @@ func Elevator_hoved() {
 			}
 			if !a {
 				fsm.Fsm_after_stop()
+
+			}
+		case outputHRA := <-ch_single_elev_queue:
+			for f, floor := range outputHRA {
+				for d, _ := range floor {
+					fsm.Fsm_OrderInList(f, d)
+				}
 
 			}
 		}
