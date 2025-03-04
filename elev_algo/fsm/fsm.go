@@ -46,6 +46,7 @@ func Fsm_onInitBetweenFloors() {
 	elevator.State = elev.MOVE
 }
 
+/*
 func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
 	//fmt.Printf("\n\nRequestButtonPress(%d, %d)\n", btnFloor, btnType)
 	//fmt.Printf("state(%d)", elevator.State)
@@ -80,8 +81,53 @@ func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
 	setAllLights(elevator)
 }
 
-func Fsm_OrderInList(f int, d int) {
+*/
 
+func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
+	//fmt.Printf("\n\nRequestButtonPress(%d, %d)\n", btnFloor, btnType)
+	//fmt.Printf("state(%d)", elevator.State)
+	
+
+	if btnType == 2{ //er cab-request
+		Fsm_OrderInList(btnFloor, btnType)
+	
+	}else{
+		elevator.Requests[btnFloor][btnType] = true
+	}
+
+
+}
+
+func Fsm_OrderInList(btnFloor int, btnType int) {
+	
+	switch elevator.State {
+	case elev.DOOROPEN:
+		if requests_shouldClearImmediately(elevator, btnFloor, btnType) {
+			timer.Timer_start(elevator.Config.DoorOpenDurationS)
+
+			Fsm_onDoorTimeout()
+		} else {
+			elevator.Requests[btnFloor][btnType] = true
+		}
+	case elev.MOVE:
+		elevator.Requests[btnFloor][btnType] = true
+	case elev.IDLE:
+		elevator.Requests[btnFloor][btnType] = true
+		elevator.Dirn, elevator.State = requests_chooseDirection(elevator)
+
+		switch elevator.State {
+		case elev.DOOROPEN:
+			outputDevice.DoorLight(true)
+			timer.Timer_start(elevator.Config.DoorOpenDurationS)
+
+			Fsm_onDoorTimeout()
+			elevator = requests_clearAtCurrentFloor(elevator)
+		case elev.MOVE:
+			outputDevice.MotorDirection(elev.MotorDirection(elevator.Dirn))
+		}
+	}
+
+	setAllLights(elevator)
 }
 
 func Fsm_onFloorArrival(newFloor int) {
