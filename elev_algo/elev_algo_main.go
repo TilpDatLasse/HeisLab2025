@@ -1,8 +1,7 @@
 package elev_algo
 
 import (
-	"fmt"
-
+	
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -18,10 +17,8 @@ type SingleElevatorChans struct {
 	Single_elev_queue chan [][2]bool
 }
 
-func Elevator_hoved(ch SingleElevatorChans) {
-	fmt.Println("Started!")
-
-	elev.Init("localhost:15657", elev.N_FLOORS)
+func Elev_main(ch SingleElevatorChans) {
+	elev.Init("localhost:15657", elev.N_FLOORS)  //burde bruke flag her for å teste med flere 
 
 	fsm.Fsm_init()
 
@@ -42,63 +39,33 @@ func Elevator_hoved(ch SingleElevatorChans) {
 		case a := <-ch.Drv_buttons:
 			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
 
-			//fmt.Printf("Received for call: %#v\n", a)
-
 		case a := <-ch.Drv_floors:
 			fsm.Fsm_onFloorArrival(a)
 
-		case a := <-ch.Timer_channel:
+		case <-ch.Timer_channel:
 			timer.Timer_stop()
-			fmt.Println(a)
 			fsm.Fsm_onDoorTimeout()
 
-		case a := <-ch.Drv_obstr:
-			fmt.Println(a)
+		case <-ch.Drv_obstr:
 			fsm.FlipObs()
 
 		case a := <-ch.Drv_stop:
-
 			if a {
 				fsm.Fsm_stop()
 			}
 			if !a {
 				fsm.Fsm_after_stop()
-
 			}
+
 		case outputHRA := <-ch.Single_elev_queue:
-			fmt.Println("MOTATT")
 			for f, floor := range outputHRA {
-				for d, isOrdered := range floor {
-					if isOrdered {
+				for d, isOrder := range floor {
+					if isOrder {
 						fsm.Fsm_OrderInList(f, d)
 					}
 				}
 			}
 		}
+
 	}
-
-	/*
-		for {
-			for f := 0; f < annet.N_FLOORS; f++ {
-				for b := 0; b < annet.N_BUTTONS; b++ {
-					v := input.RequestButton(annet.ButtonType(b), f)
-					if v {
-						annet.Fsm_onRequestButtonPress(f, b)
-					}
-				}
-			}
-
-			// Floor sensor
-			f := input.FloorSensor()
-			if f != -1 && f != prevFloor {
-				annet.Fsm_onFloorArrival(f)
-			}
-			prevFloor = f
-
-			// Timer
-
-
-			time.Sleep(time.Duration(inputPollRateMs) * time.Millisecond)
-		}
-	*/
 }

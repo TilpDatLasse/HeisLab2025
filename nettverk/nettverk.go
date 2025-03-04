@@ -34,6 +34,12 @@ type HelloMsg struct {
 	Iter    int
 }
 
+type InformationElev struct {
+	State             HRAElevState
+	HallRequests      [][2]bool  // denne bør endres til å holde confirmationState, ikke bool
+	ID                string
+}
+
 type HRAElevState struct {
 	Behavior    string `json:"behaviour"`
 	Floor       int    `json:"floor"`
@@ -41,20 +47,12 @@ type HRAElevState struct {
 	CabRequests []bool `json:"cabRequests"`
 }
 
-// heihei
-
-type InformationElev struct {
-	State             HRAElevState
-	HallRequests      [][2]bool  // denne b;r endres til aa holde confimationstate, ikke bool
-	ID                string
-	//ConfirmationState [][2]ConfirmationState
-}
-
 type HRAInput struct {
 	HallRequests [][2]bool               `json:"hallRequests"`
 	States       map[string]HRAElevState `json:"states"`
 }
 
+//henter status fra heisen og sender på channel som en informationElev-variabel
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
 		info := Converter(fsm.FetchElevatorStatus())
@@ -62,35 +60,25 @@ func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 		ch_HRAInputTx <- info
 		time.Sleep(1000 * time.Millisecond)
 	}
-
 }
 
 func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
-
 		b.Transmitter(14000, ch_HRAInputTx)
-
 	}
 }
 
 func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 	for {
-		//fmt.Println("kjører recieved status")
 		b.Receiver(14000, ch_HRAInputRx)
 	}
 }
 
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev) {
-
-	// Our id can be anything. Here we pass it on the command line, using
-	//  `go run main.go -id=our_id`
 	var id string
 	flag.StringVar(&id, "id", "", "id of this peer")
 	flag.Parse()
 
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
 	if id == "" {
 		localIP, err := localip.LocalIP()
 		if err != nil {
@@ -101,36 +89,11 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev) {
 	}
 	ID = id
 
-	// We make a channel for receiving updates on the id's of the peers that are
-	//  alive on the network
 	peerUpdateCh := make(chan peers.PeerUpdate)
-	// We can disable/enable the transmitter after it has been started.
-	// This could be used to signal that we are somehow "unavailable".
 	peerTxEnable := make(chan bool)
 	go peers.Transmitter(16000, id, peerTxEnable)
 	go peers.Receiver(16000, peerUpdateCh)
 
-	// We make channels for sending and receiving our custom data types
-	//HelloTx := make(chan HelloMsg)
-
-	// ... and start the transmitter/receiver pair on some port
-	// These functions can take any number of channels! It is also possible to
-	//  start multiple transmitters/receivers on the same port.
-	//go b.Transmitter(17000, bustatusElevttonTx)
-	//go b.Receiver(17000, buttonRx)
-
-	// The example message. We just send one of these every second.
-	/*go func() {
-		helloMsg := HelloMsg{"Hello from " + id, 0}
-		for {
-			helloMsg.Iter++
-			HelloTx <- helloMsg
-			time.Sleep(1 * time.Second)
-
-		}BroadcastElevatorStatus
-	}()*/
-
-	fmt.Println("Started")
 	for {
 		select {
 		case p := <-peerUpdateCh:
@@ -139,19 +102,14 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev) {
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		//case a := <-buttonRx:
-		//buttonRx1 <- a
-		//fmt.Printf("Received: %#v\n", a)
 		case a := <-ch_HRAInputRx:
 			InfoMap[a.ID] = a
-			//fmt.Println("LAGT TIL: ", a.ID," i infomap")
-			//fmt.Println("Reicievd status", a.State.Floor, "from peer ", a.ID)
 		}
 	}
 }
 
+//konverterer en elev.elevator-variabel til en InformationElev-variabel
 func Converter(e elev.Elevator) InformationElev {
-	//fmt.Println("converting")
 	rawInput := e
 	hallRequests := make([][2]bool, len(rawInput.Requests))
 	cabRequests := make([]bool, len(rawInput.Requests))
@@ -161,23 +119,19 @@ func Converter(e elev.Elevator) InformationElev {
 		cabRequests[i] = rawInput.Requests[i][2]
 	}
 
-	//fmt.Println("raw:", hallRequests[1][1])
-
 	input := InformationElev{
 		HallRequests: hallRequests,
 		State: HRAElevState{
-
 			Behavior:    stateToString(rawInput.State),
 			Floor:       rawInput.Floor,
 			Direction:   dirnToString(rawInput.Dirn),
 			CabRequests: cabRequests,
 		},
 	}
-
 	return input
-
 }
 
+//konverterer states vi bruker til states HRA bruker
 func stateToString(s elev.State) string {
 	switch s {
 	case elev.IDLE:
@@ -189,10 +143,11 @@ func stateToString(s elev.State) string {
 	case elev.STOP:
 		return "doorOpen"
 	default:
-		return "idle" // Håndterer udefinerte verdier
+		return "idle" 
 	}
 }
 
+//konverterer dirn vi bruker til dirn HRA bruker
 func dirnToString(s elev.MotorDirection) string {
 	switch s {
 	case elev.MD_Up:
@@ -202,17 +157,18 @@ func dirnToString(s elev.MotorDirection) string {
 	case elev.MD_Stop:
 		return "stop"
 	default:
-		return "unknown" // Håndterer udefinerte verdier
+		return "stop"
 	}
 }
 
+//Henter output fra HRA og sender videre til elev-modulen
 func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
-	for
-	output := <-HRAOut
-	for k, v := range output {
-		if k == ID {
-			ch_elevator_queue <- v
+	for{
+		output := <-HRAOut
+		for k, v := range output {
+			if k == ID {
+				ch_elevator_queue <- v
+			}
 		}
 	}
-
 }

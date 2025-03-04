@@ -1,22 +1,16 @@
 package main
 
 import (
+	"fmt"
 
-	/*
-		"github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
-		"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
-	*/
+	"github.com/TilpDatLasse/HeisLab2025/HRA"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo"
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-
-	//"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
-	//"github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/HRA"
 )
 
 func main() {
-
+	fmt.Println("Starting, please wait...")
 	SingElevChans := elev_algo.SingleElevatorChans{
 		Drv_buttons:       make(chan elev.ButtonEvent),
 		Drv_floors:        make(chan int),
@@ -30,23 +24,21 @@ func main() {
 	ch_HRAInputTx := make(chan nettverk.InformationElev)
 	ch_HRAInputRx := make(chan nettverk.InformationElev)
 
-	go elev_algo.Elevator_hoved(SingElevChans)
+	go elev_algo.Elev_main(SingElevChans)
 	go nettverk.Nettverk_hoved(ch_HRAInputRx)
 	go HRA.HRAMain(ch_HRAOut)
 	go nettverk.SetElevatorStatus(ch_HRAInputTx)
 	go nettverk.RecieveElevatorStatus(ch_HRAInputRx)
 	go nettverk.BroadcastElevatorStatus(ch_HRAInputTx)
 	go nettverk.FromHRA(ch_HRAOut, SingElevChans.Single_elev_queue)
-	//go fsm.FetchElevatorStatus()
-	//go bcast.Receiver(17000, buttonRx)
-	// for {
+
 	select {}
-	// }
+
 }
 
-//kommentarer fra studass!
-//Netteverksmodul kan brytes ned, moduler burde generelt innholde ting som er nert deres kjerneoppgave
+//kommentarer fra studass:
+//Netteverksmodul kan brytes ned, moduler burde generelt innholde ting som er nært deres kjerneoppgave
 //Mainfilen er fint strukturert
-//Confirmationstate er viktig, kan implementeres i den opprinnelige hallrequest listen
-//Worldview er veldig viktig og burde nok v're egen modul
-//channels som bare g[r inn i en funksjon er sannsynligvis overfl;dige.
+//cyclic-counter er viktig, kan implementeres i den opprinnelige hallrequest-listen
+//Worldview er veldig viktig og burde nok være egen modul
+//channels som bare går inn i kun én funksjon er sannsynligvis overflødige.

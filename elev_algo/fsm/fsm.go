@@ -1,8 +1,6 @@
 package fsm
 
 import (
-	"fmt"
-	//"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -12,12 +10,7 @@ var elevator elev.Elevator
 var outputDevice elev.ElevatorOutputDevice
 
 func FetchElevatorStatus() elev.Elevator {
-
-	//channel <- elevator
-	//fmt.Println("sender fra fetching", elevator.Requests[1][1])
-
 	return elevator
-
 }
 
 func Fsm_init() {
@@ -40,25 +33,19 @@ func setAllLights(e elev.Elevator) {
 }
 
 func Fsm_onInitBetweenFloors() {
-	print(outputDevice.MotorDirection)
 	outputDevice.MotorDirection(-1)
 	elevator.Dirn = -1
 	elevator.State = elev.MOVE
 }
 
 func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
-	//fmt.Printf("\n\nRequestButtonPress(%d, %d)\n", btnFloor, btnType)
-	//fmt.Printf("state(%d)", elevator.State)
 	elevator.Requests[btnFloor][btnType] = true
 
 	if btnType == 2 { //er cab-request
 		Fsm_OrderInList(btnFloor, btnType)
-
 	} else {
-
 		setAllLights(elevator)
 	}
-
 }
 
 func Fsm_OrderInList(btnFloor int, btnType int) {
@@ -97,7 +84,7 @@ func Fsm_OrderInList(btnFloor int, btnType int) {
 }
 
 func Fsm_onFloorArrival(newFloor int) {
-	fmt.Printf("\n\nFloorArrival(%d)\n", newFloor)
+	//fmt.Printf("\n\nFloorArrival(%d)\n", newFloor)
 
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)
@@ -113,8 +100,6 @@ func Fsm_onFloorArrival(newFloor int) {
 }
 
 func Fsm_onDoorTimeout() {
-	//fmt.Println("\n\nDoorTimeout()")
-
 	if elevator.State == elev.DOOROPEN {
 		dirn, behaviour := requests_chooseDirection(elevator)
 		elevator.Dirn = dirn
@@ -133,14 +118,11 @@ func Fsm_onDoorTimeout() {
 }
 
 func Fsm_stop() {
-
 	elev.SetMotorDirection(elev.MD_Stop)
-
 }
 
 func Fsm_after_stop() {
 	elev.SetMotorDirection(elevator.Dirn)
-
 }
 
 func GetObs() bool {
@@ -185,7 +167,6 @@ func requests_here(e elev.Elevator) bool {
 }
 
 func requests_chooseDirection(e elev.Elevator) (elev.MotorDirection, elev.State) {
-	//fmt.Println("chooseDir")
 	switch e.Dirn {
 	case elev.MD_Up:
 		if requests_above(e) {
@@ -245,12 +226,12 @@ func requests_shouldClearImmediately(e elev.Elevator, btn_floor int, btn_type in
 func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 	switch e.Config.ClearRequestVariant {
 	case elev.CV_All:
-		//fmt.Println("All")
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
 			e.OwnRequests[e.Floor][btn] = false
 		}
 	case elev.CV_InDirn:
 		e.OwnRequests[e.Floor][elev.B_Cab] = false
+		e.Requests[e.Floor][elev.B_Cab] = false
 		switch e.Dirn {
 		case elev.MD_Up:
 			if !requests_above(e) && !e.OwnRequests[e.Floor][elev.B_HallUp] {
