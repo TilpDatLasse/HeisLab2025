@@ -1,10 +1,12 @@
 package HRA
 
 import (
+	"encoding/json"
 	"fmt"
-	"sort"
-	"strconv"
-	"strings"
+	"os/exec"
+	//"sort"
+	//"strconv"
+	//"strings"
 	"time"
 
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
@@ -16,6 +18,7 @@ import (
 // Struct members must be public in order to be accessible by json.Marshal/.Unmarshal
 // This means they must start with a capital letter, so we need to use field renaming struct tags to make them camelCase
 
+/*
 func getLastSixDigits(str string) int {
 	// Del opp strengen på "-" og hent det siste segmentet
 	parts := strings.Split(str, "-")
@@ -28,16 +31,17 @@ func getLastSixDigits(str string) int {
 	return num
 
 }
+	*/
 
 func HRAMain() {
 
 	fmt.Println("kjører HRA")
-	//hraExecutable := "hall_request_assigner"
+	hraExecutable := "hall_request_assigner"
 
 	fmt.Println("2")
 
 	for {
-
+		/*
 		// Lager en slice for å lagre nøklene
 		var keys []string
 
@@ -54,43 +58,58 @@ func HRAMain() {
 
 		var input nettverk.HRAInput
 
+		
+		input.States = make(map[string]nettverk.HRAElevState)
+		
+
 		for i := 0; i < len(keys); i++ {
 			elevstate := nettverk.InfoMap[keys[i]]
 			input.States[myList[i]] = elevstate.State
-		}
-		if len(keys) > 0 {
-			input.HallRequests = nettverk.InfoMap[keys[0]].HallRequests
-
+			fmt.Println("TEST = ", elevstate.State.CabRequests)
 		}
 
+		*/
+		var input nettverk.HRAInput
+		input.States = make(map[string]nettverk.HRAElevState)
+
+		for key := range nettverk.InfoMap {
+			elevstate := nettverk.InfoMap[key].State
+			input.States[key] = elevstate
+			input.HallRequests = nettverk.InfoMap[key].HallRequests
+			//fmt.Println("TEST = ", elevstate.State.CabRequests)
+		}
+
+		
+		if len(nettverk.InfoMap) > 0 {
+			
+			jsonBytes, err := json.Marshal(input)
+			if err != nil {
+				fmt.Println("json.Marshal error: ", err)
+				return
+			}
+
+			ret, err := exec.Command("C:/Users/lasse/OneDrive - NTNU/Documents/Sanntid/Lab/HeisLab2025/HRA/"+hraExecutable, "-i", string(jsonBytes)).CombinedOutput()
+			if err != nil {
+				fmt.Println("exec.Command error: ", err)
+				fmt.Println(string(ret))
+				return
+			}
+
+			output := new(map[string][][2]bool)
+			err = json.Unmarshal(ret, &output)
+			if err != nil {
+				fmt.Println("json.Unmarshal error: ", err)
+				return
+			}
+
+			fmt.Printf("output: \n")
+			for k, v := range *output {
+				fmt.Printf("%6v :  %+v\n", k, v)
+			}
+		}
 		//fmt.Println(input.States["one"].Floor)
 		time.Sleep(1000 * time.Millisecond)
+
 	}
-	/*
-		jsonBytes, err := json.Marshal(input)
-		if err != nil {
-			fmt.Println("json.Marshal error: ", err)
-			return
-		}
-
-		ret, err := exec.Command("../hall_request_assigner/"+hraExecutable, "-i", string(jsonBytes)).CombinedOutput()
-		if err != nil {
-			fmt.Println("exec.Command error: ", err)
-			fmt.Println(string(ret))
-			return
-		}
-
-		output := new(map[string][][2]bool)
-		err = json.Unmarshal(ret, &output)
-		if err != nil {
-			fmt.Println("json.Unmarshal error: ", err)
-			return
-		}
-
-		fmt.Printf("output: \n")
-		for k, v := range *output {
-			fmt.Printf("%6v :  %+v\n", k, v)
-		}
-	*/
 
 }

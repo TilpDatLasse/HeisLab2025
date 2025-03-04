@@ -55,6 +55,7 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
+
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
 		info := Converter(fsm.FetchElevatorStatus())
@@ -144,7 +145,8 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev) {
 		//fmt.Printf("Received: %#v\n", a)
 		case a := <-ch_HRAInputRx:
 			InfoMap[a.ID] = a
-			fmt.Println("Reicievd status", a.State.Floor, "from peer ", a.ID)
+			//fmt.Println("LAGT TIL: ", a.ID," i infomap")
+			//fmt.Println("Reicievd status", a.State.Floor, "from peer ", a.ID)
 		}
 	}
 }
@@ -166,13 +168,41 @@ func Converter(e elev.Elevator) InformationElev {
 		HallRequests: hallRequests,
 		State: HRAElevState{
 
-			Behavior:    string(rawInput.State),
+			Behavior:    stateToString(rawInput.State),
 			Floor:       rawInput.Floor,
-			Direction:   string(rawInput.Dirn),
+			Direction:   dirnToString(rawInput.Dirn),
 			CabRequests: cabRequests,
 		},
 	}
 
 	return input
 
+}
+
+func stateToString (s elev.State) string {
+	switch s {
+	case elev.IDLE:
+		return "idle"
+	case elev.MOVE:
+		return "moving"
+	case elev.DOOROPEN:
+		return "doorOpen"
+	case elev.STOP:
+		return "doorOpen"
+	default:
+		return "unknown" // Håndterer udefinerte verdier
+	}
+}
+
+func dirnToString (s elev.MotorDirection) string {
+	switch s {
+	case elev.MD_Up:
+		return "up"
+	case elev.MD_Down:
+		return "down"
+	case elev.MD_Stop:
+		return "stop"
+	default:
+		return "unknown" // Håndterer udefinerte verdier
+	}
 }
