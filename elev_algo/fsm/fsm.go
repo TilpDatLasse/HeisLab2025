@@ -46,73 +46,39 @@ func Fsm_onInitBetweenFloors() {
 	elevator.State = elev.MOVE
 }
 
-/*
 func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
 	//fmt.Printf("\n\nRequestButtonPress(%d, %d)\n", btnFloor, btnType)
 	//fmt.Printf("state(%d)", elevator.State)
+	elevator.Requests[btnFloor][btnType] = true
 
-	switch elevator.State {
-	case elev.DOOROPEN:
-		if requests_shouldClearImmediately(elevator, btnFloor, btnType) {
-			timer.Timer_start(elevator.Config.DoorOpenDurationS)
-
-			Fsm_onDoorTimeout()
-		} else {
-			elevator.Requests[btnFloor][btnType] = true
-		}
-	case elev.MOVE:
-		elevator.Requests[btnFloor][btnType] = true
-	case elev.IDLE:
-		elevator.Requests[btnFloor][btnType] = true
-		elevator.Dirn, elevator.State = requests_chooseDirection(elevator)
-
-		switch elevator.State {
-		case elev.DOOROPEN:
-			outputDevice.DoorLight(true)
-			timer.Timer_start(elevator.Config.DoorOpenDurationS)
-
-			Fsm_onDoorTimeout()
-			elevator = requests_clearAtCurrentFloor(elevator)
-		case elev.MOVE:
-			outputDevice.MotorDirection(elev.MotorDirection(elevator.Dirn))
-		}
-	}
-
-	setAllLights(elevator)
-}
-
-*/
-
-func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
-	//fmt.Printf("\n\nRequestButtonPress(%d, %d)\n", btnFloor, btnType)
-	//fmt.Printf("state(%d)", elevator.State)
-	
-
-	if btnType == 2{ //er cab-request
+	if btnType == 2 { //er cab-request
 		Fsm_OrderInList(btnFloor, btnType)
-	
-	}else{
-		elevator.Requests[btnFloor][btnType] = true
-	}
 
+	} else {
+
+		setAllLights(elevator)
+	}
 
 }
 
 func Fsm_OrderInList(btnFloor int, btnType int) {
-	
+	elevator.OwnRequests[btnFloor][btnType] = true
+
 	switch elevator.State {
 	case elev.DOOROPEN:
 		if requests_shouldClearImmediately(elevator, btnFloor, btnType) {
+			elevator.OwnRequests[btnFloor][btnType] = false
+			elevator.Requests[btnFloor][btnType] = false
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
 
 			Fsm_onDoorTimeout()
 		} else {
-			elevator.Requests[btnFloor][btnType] = true
+			elevator.OwnRequests[btnFloor][btnType] = true
 		}
 	case elev.MOVE:
-		elevator.Requests[btnFloor][btnType] = true
+		elevator.OwnRequests[btnFloor][btnType] = true
 	case elev.IDLE:
-		elevator.Requests[btnFloor][btnType] = true
+		elevator.OwnRequests[btnFloor][btnType] = true
 		elevator.Dirn, elevator.State = requests_chooseDirection(elevator)
 
 		switch elevator.State {
@@ -190,7 +156,7 @@ func FlipObs() {
 func requests_above(e elev.Elevator) bool {
 	for f := e.Floor + 1; f < elev.N_FLOORS; f++ {
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
-			if e.Requests[f][btn] {
+			if e.OwnRequests[f][btn] {
 				return true
 			}
 		}
@@ -201,7 +167,7 @@ func requests_above(e elev.Elevator) bool {
 func requests_below(e elev.Elevator) bool {
 	for f := 0; f < e.Floor; f++ {
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
-			if e.Requests[f][btn] {
+			if e.OwnRequests[f][btn] {
 				return true
 			}
 		}
@@ -211,7 +177,7 @@ func requests_below(e elev.Elevator) bool {
 
 func requests_here(e elev.Elevator) bool {
 	for btn := 0; btn < elev.N_BUTTONS; btn++ {
-		if e.Requests[e.Floor][btn] {
+		if e.OwnRequests[e.Floor][btn] {
 			return true
 		}
 	}
@@ -252,9 +218,9 @@ func requests_chooseDirection(e elev.Elevator) (elev.MotorDirection, elev.State)
 func requests_shouldStop(e elev.Elevator) bool {
 	switch e.Dirn {
 	case elev.MD_Down:
-		return e.Requests[e.Floor][elev.B_HallDown] || e.Requests[e.Floor][elev.B_Cab] || !requests_below(e)
+		return e.OwnRequests[e.Floor][elev.B_HallDown] || e.OwnRequests[e.Floor][elev.B_Cab] || !requests_below(e)
 	case elev.MD_Up:
-		return e.Requests[e.Floor][elev.B_HallUp] || e.Requests[e.Floor][elev.B_Cab] || !requests_above(e)
+		return e.OwnRequests[e.Floor][elev.B_HallUp] || e.OwnRequests[e.Floor][elev.B_Cab] || !requests_above(e)
 	default:
 		return true
 	}
@@ -281,27 +247,36 @@ func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 	case elev.CV_All:
 		//fmt.Println("All")
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
-			e.Requests[e.Floor][btn] = false
+			e.OwnRequests[e.Floor][btn] = false
 		}
 	case elev.CV_InDirn:
-		//fmt.Println("InDirn")
-		e.Requests[e.Floor][elev.B_Cab] = false
+		e.OwnRequests[e.Floor][elev.B_Cab] = false
 		switch e.Dirn {
 		case elev.MD_Up:
-			if !requests_above(e) && !e.Requests[e.Floor][elev.B_HallUp] {
+			if !requests_above(e) && !e.OwnRequests[e.Floor][elev.B_HallUp] {
+				e.OwnRequests[e.Floor][elev.B_HallDown] = false
 				e.Requests[e.Floor][elev.B_HallDown] = false
 			}
+			e.OwnRequests[e.Floor][elev.B_HallUp] = false
 			e.Requests[e.Floor][elev.B_HallUp] = false
+
 		case elev.MD_Down:
-			if !requests_below(e) && !e.Requests[e.Floor][elev.B_HallDown] {
+			if !requests_below(e) && !e.OwnRequests[e.Floor][elev.B_HallDown] {
+				e.OwnRequests[e.Floor][elev.B_HallUp] = false
 				e.Requests[e.Floor][elev.B_HallUp] = false
 			}
+			e.OwnRequests[e.Floor][elev.B_HallDown] = false
 			e.Requests[e.Floor][elev.B_HallDown] = false
 		case elev.MD_Stop:
+			e.OwnRequests[e.Floor][elev.B_HallUp] = false
 			e.Requests[e.Floor][elev.B_HallUp] = false
+			e.OwnRequests[e.Floor][elev.B_HallDown] = false
 			e.Requests[e.Floor][elev.B_HallDown] = false
+
 		default:
+			e.OwnRequests[e.Floor][elev.B_HallUp] = false
 			e.Requests[e.Floor][elev.B_HallUp] = false
+			e.OwnRequests[e.Floor][elev.B_HallDown] = false
 			e.Requests[e.Floor][elev.B_HallDown] = false
 		}
 	}

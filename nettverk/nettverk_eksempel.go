@@ -206,11 +206,14 @@ func dirnToString(s elev.MotorDirection) string {
 	}
 }
 
-func FromHRA(ch_HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
-	output := <-ch_HRAOut
-	for k, v := range output {
-		if k == ID {
-			ch_elevator_queue <- v
+func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
+	for{
+		output := <-HRAOut
+		for k, v := range output {
+			if k == ID {
+				ch_elevator_queue <- v
+			}
 		}
 	}
-}
+	}
+

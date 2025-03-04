@@ -35,6 +35,7 @@ type Elevator struct {
 	Dirn     MotorDirection
 	State    State
 	Requests [N_FLOORS][N_BUTTONS]bool
+	OwnRequests [N_FLOORS][N_BUTTONS]bool
 	Config   ElevatorConfig
 	Obs      bool
 }
