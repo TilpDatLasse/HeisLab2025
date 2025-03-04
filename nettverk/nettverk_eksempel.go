@@ -44,10 +44,10 @@ type HRAElevState struct {
 // heihei
 
 type InformationElev struct {
-	State        HRAElevState
-	HallRequests [][2]bool
-	ID           string
-	confirmation [][2]ConfirmationState
+	State             HRAElevState
+	HallRequests      [][2]bool  // denne b;r endres til aa holde confimationstate, ikke bool
+	ID                string
+	//ConfirmationState [][2]ConfirmationState
 }
 
 type HRAInput struct {
@@ -65,7 +65,7 @@ func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 
 }
 
-func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev, statusElev chan elev.Elevator) {
+func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
 
 		b.Transmitter(14000, ch_HRAInputTx)
@@ -207,13 +207,12 @@ func dirnToString(s elev.MotorDirection) string {
 }
 
 func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
-	for{
-		output := <-HRAOut
-		for k, v := range output {
-			if k == ID {
-				ch_elevator_queue <- v
-			}
+	for
+	output := <-HRAOut
+	for k, v := range output {
+		if k == ID {
+			ch_elevator_queue <- v
 		}
 	}
-	}
 
+}

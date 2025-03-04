@@ -66,11 +66,13 @@ func Elevator_hoved(ch SingleElevatorChans) {
 
 			}
 		case outputHRA := <-ch.Single_elev_queue:
+			fmt.Println("MOTATT")
 			for f, floor := range outputHRA {
-				for d, _ := range floor {
-					fsm.Fsm_OrderInList(f, d)
+				for d, isOrdered := range floor {
+					if isOrdered {
+						fsm.Fsm_OrderInList(f, d)
+					}
 				}
-
 			}
 		}
 	}
