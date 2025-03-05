@@ -1,7 +1,6 @@
 package nettverk
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -35,9 +34,9 @@ type HelloMsg struct {
 }
 
 type InformationElev struct {
-	State             HRAElevState
-	HallRequests      [][2]bool  // denne bør endres til å holde confirmationState, ikke bool
-	ID                string
+	State        HRAElevState
+	HallRequests [][2]bool // denne bør endres til å holde confirmationState, ikke bool
+	ID           string
 }
 
 type HRAElevState struct {
@@ -52,7 +51,7 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-//henter status fra heisen og sender på channel som en informationElev-variabel
+// henter status fra heisen og sender på channel som en informationElev-variabel
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
 		info := Converter(fsm.FetchElevatorStatus())
@@ -74,10 +73,7 @@ func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 	}
 }
 
-func Nettverk_hoved(ch_HRAInputRx chan InformationElev) {
-	var id string
-	flag.StringVar(&id, "id", "", "id of this peer")
-	flag.Parse()
+func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 
 	if id == "" {
 		localIP, err := localip.LocalIP()
@@ -108,7 +104,7 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev) {
 	}
 }
 
-//konverterer en elev.elevator-variabel til en InformationElev-variabel
+// konverterer en elev.elevator-variabel til en InformationElev-variabel
 func Converter(e elev.Elevator) InformationElev {
 	rawInput := e
 	hallRequests := make([][2]bool, len(rawInput.Requests))
@@ -131,7 +127,7 @@ func Converter(e elev.Elevator) InformationElev {
 	return input
 }
 
-//konverterer states vi bruker til states HRA bruker
+// konverterer states vi bruker til states HRA bruker
 func stateToString(s elev.State) string {
 	switch s {
 	case elev.IDLE:
@@ -143,11 +139,11 @@ func stateToString(s elev.State) string {
 	case elev.STOP:
 		return "doorOpen"
 	default:
-		return "idle" 
+		return "idle"
 	}
 }
 
-//konverterer dirn vi bruker til dirn HRA bruker
+// konverterer dirn vi bruker til dirn HRA bruker
 func dirnToString(s elev.MotorDirection) string {
 	switch s {
 	case elev.MD_Up:
@@ -161,9 +157,9 @@ func dirnToString(s elev.MotorDirection) string {
 	}
 }
 
-//Henter output fra HRA og sender videre til elev-modulen
+// Henter output fra HRA og sender videre til elev-modulen
 func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
-	for{
+	for {
 		output := <-HRAOut
 		for k, v := range output {
 			if k == ID {

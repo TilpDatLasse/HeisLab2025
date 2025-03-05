@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 
+	//"github.com/TilpDatLasse/HeisLab2025/HRA"
 	"github.com/TilpDatLasse/HeisLab2025/HRA"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo"
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
@@ -11,6 +13,16 @@ import (
 
 func main() {
 	fmt.Println("Starting, please wait...")
+
+	var (
+		id      string
+		simPort string
+	)
+
+	flag.StringVar(&id, "id", "0", "id of this peer")
+	flag.StringVar(&simPort, "simPort", "15678", "simulation server port")
+	flag.Parse()
+
 	SingElevChans := elev_algo.SingleElevatorChans{
 		Drv_buttons:       make(chan elev.ButtonEvent),
 		Drv_floors:        make(chan int),
@@ -24,8 +36,8 @@ func main() {
 	ch_HRAInputTx := make(chan nettverk.InformationElev)
 	ch_HRAInputRx := make(chan nettverk.InformationElev)
 
-	go elev_algo.Elev_main(SingElevChans)
-	go nettverk.Nettverk_hoved(ch_HRAInputRx)
+	go elev_algo.Elev_main(SingElevChans, simPort)
+	go nettverk.Nettverk_hoved(ch_HRAInputRx, id)
 	go HRA.HRAMain(ch_HRAOut)
 	go nettverk.SetElevatorStatus(ch_HRAInputTx)
 	go nettverk.RecieveElevatorStatus(ch_HRAInputRx)

@@ -1,7 +1,6 @@
 package elev_algo
 
 import (
-	
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -17,8 +16,8 @@ type SingleElevatorChans struct {
 	Single_elev_queue chan [][2]bool
 }
 
-func Elev_main(ch SingleElevatorChans) {
-	elev.Init("localhost:15657", elev.N_FLOORS)  //burde bruke flag her for å teste med flere 
+func Elev_main(ch SingleElevatorChans, simPort string) {
+	elev.Init("localhost:"+simPort, elev.N_FLOORS) //burde bruke flag her for å teste med flere
 
 	fsm.Fsm_init()
 

@@ -10,15 +10,17 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
-
 func HRAMain(HRAOut chan map[string][][2]bool) {
 
 	hraExecutable := ""
-    switch runtime.GOOS {
-        case "linux":   hraExecutable  = "hall_request_assigner"
-        case "windows": hraExecutable  = "hall_request_assigner.exe"
-        default:        panic("OS not supported")
-    }
+	switch runtime.GOOS {
+	case "linux":
+		hraExecutable = "hall_request_assigner"
+	case "windows":
+		hraExecutable = "hall_request_assigner.exe"
+	default:
+		panic("OS not supported")
+	}
 
 	for {
 
@@ -53,7 +55,7 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 				fmt.Println("json.Unmarshal error: ", err)
 				return
 			}
-			HRAOut <- *output  //send HRA-output videre
+			HRAOut <- *output //send HRA-output videre
 			fmt.Printf("output: \n")
 			for k, v := range *output {
 				fmt.Printf("%6v :  %+v\n", k, v)
