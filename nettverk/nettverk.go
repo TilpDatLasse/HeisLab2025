@@ -13,8 +13,7 @@ import (
 )
 
 var ID string
-var InfoMap = make(map[string]InformationElev)
-
+var InfoMap = make(map[string]InformationElev) //is used to gather the data from each elevator before it is sent to the HRA
 
 type ConfirmationState int
 
@@ -31,7 +30,7 @@ type HelloMsg struct {
 
 type InformationElev struct {
 	State        HRAElevState
-	HallRequests [][2]bool 
+	HallRequests [][2]bool
 	ID           string
 }
 
@@ -47,7 +46,7 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-// henter status fra heisen og sender på channel som en informationElev-variabel
+// Gets status from the elevator and sends it on the channel as a informationElev-variabel
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
 		info := Converter(fsm.FetchElevatorStatus())
@@ -69,6 +68,7 @@ func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 	}
 }
 
+// updating peer-list and adding elevators with their data to the InfoMap
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 
 	if id == "" {
@@ -100,7 +100,7 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 	}
 }
 
-// konverterer en elev.elevator-variabel til en InformationElev-variabel
+// converting a elev.elevator-variabel to a InformationElev-variabel
 func Converter(e elev.Elevator) InformationElev {
 	rawInput := e
 	hallRequests := make([][2]bool, len(rawInput.Requests))
@@ -123,7 +123,7 @@ func Converter(e elev.Elevator) InformationElev {
 	return input
 }
 
-// konverterer states vi bruker til states HRA bruker
+// converting states the elev_algo module uses states the HRA uses
 func stateToString(s elev.State) string {
 	switch s {
 	case elev.IDLE:
@@ -139,7 +139,7 @@ func stateToString(s elev.State) string {
 	}
 }
 
-// konverterer dirn vi bruker til dirn HRA bruker
+// converting directions the elev module uses to directions the HRA uses
 func dirnToString(s elev.MotorDirection) string {
 	switch s {
 	case elev.MD_Up:
@@ -153,7 +153,7 @@ func dirnToString(s elev.MotorDirection) string {
 	}
 }
 
-// Henter output fra HRA og sender videre til elev-modulen
+// Gets output from HRA and sends to the elev module
 func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
 	for {
 		output := <-HRAOut
