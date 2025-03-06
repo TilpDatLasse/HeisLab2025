@@ -10,6 +10,13 @@ import (
 	"HeisLab2025/nettverk"
 )
 
+//overview:
+//the project is currently divided into 3 modules: single elevator ("elev_algo"), networking ("nettverk") and Hall request assigner ("HRA")
+// elev_algo: Handles the sigle elevator (requests, input, motor, etc.)
+// nettverk: Handles messaging over the network, and some convertion 
+// HRA: Feeds a map of elevators to the executable and returns the relevant output to the elev_algo module
+
+
 func main() {
 	fmt.Println("Starting, please wait...")
 

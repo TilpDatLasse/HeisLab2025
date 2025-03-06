@@ -9,6 +9,7 @@ import (
 var elevator elev.Elevator
 var outputDevice elev.ElevatorOutputDevice
 
+//used by the nettverk module
 func FetchElevatorStatus() elev.Elevator {
 	return elevator
 }
@@ -41,13 +42,15 @@ func Fsm_onInitBetweenFloors() {
 func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
 	elevator.Requests[btnFloor][btnType] = true
 
-	if btnType == 2 { //er cab-request
+	if btnType == 2 { //is cab-request
 		Fsm_OrderInList(btnFloor, btnType)
 	} else {
 		setAllLights(elevator)
 	}
 }
 
+//if the list from the HRA contains a true, the order must be taken by this elevator
+//the action depends on the state the elevator is currently in
 func Fsm_OrderInList(btnFloor int, btnType int) {
 	elevator.OwnRequests[btnFloor][btnType] = true
 
@@ -84,8 +87,6 @@ func Fsm_OrderInList(btnFloor int, btnType int) {
 }
 
 func Fsm_onFloorArrival(newFloor int) {
-	//fmt.Printf("\n\nFloorArrival(%d)\n", newFloor)
-
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)
 
@@ -133,7 +134,7 @@ func FlipObs() {
 	elevator.Obs = !elevator.Obs
 }
 
-//fra requests
+// the functions below are used to handle requests in an effective manner
 
 func requests_above(e elev.Elevator) bool {
 	for f := e.Floor + 1; f < elev.N_FLOORS; f++ {

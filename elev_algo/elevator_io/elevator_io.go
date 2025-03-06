@@ -45,7 +45,7 @@ type ElevatorConfig struct {
 	DoorOpenDurationS   float64
 }
 
-// fra elevator_io_device
+// Input- and Output-devices are used to transfer information about the elevator in a compact format
 type ElevatorInputDevice struct {
 	FloorSensor   func() int
 	RequestButton func(ButtonType, int) bool
@@ -80,7 +80,7 @@ func Elevio_getOutputDevice() ElevatorOutputDevice {
 	}
 }
 
-// opprinnelig i elevator_io
+// provided code
 const _pollRate = 20 * time.Millisecond
 
 var _initialized bool = false
