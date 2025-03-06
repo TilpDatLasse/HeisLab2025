@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 
-	//"github.com/TilpDatLasse/HeisLab2025/HRA"
-	"github.com/TilpDatLasse/HeisLab2025/HRA"
-	"github.com/TilpDatLasse/HeisLab2025/elev_algo"
-	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"HeisLab2025/HRA"
+	"HeisLab2025/elev_algo"
+	elev "HeisLab2025/elev_algo/elevator_io"
+	"HeisLab2025/nettverk"
 )
 
 func main() {
@@ -48,9 +47,3 @@ func main() {
 
 }
 
-//kommentarer fra studass:
-//Netteverksmodul kan brytes ned, moduler burde generelt innholde ting som er nært deres kjerneoppgave
-//Mainfilen er fint strukturert
-//cyclic-counter er viktig, kan implementeres i den opprinnelige hallrequest-listen
-//Worldview er veldig viktig og burde nok være egen modul
-//channels som bare går inn i kun én funksjon er sannsynligvis overflødige.

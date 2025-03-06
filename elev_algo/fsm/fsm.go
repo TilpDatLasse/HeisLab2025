@@ -2,8 +2,8 @@ package fsm
 
 import (
 
-	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
+	elev "github.com//HeisLab2025/elev_algo/elevator_io"
+	"github.com//HeisLab2025/elev_algo/timer"
 )
 
 var elevator elev.Elevator

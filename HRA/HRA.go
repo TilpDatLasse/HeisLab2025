@@ -7,9 +7,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"github.com//HeisLab2025/nettverk"
 )
 
+//Sending elevator world-view to HRA and sending HRA-output back
 func HRAMain(HRAOut chan map[string][][2]bool) {
 
 	hraExecutable := ""
@@ -55,7 +56,7 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 				fmt.Println("json.Unmarshal error: ", err)
 				return
 			}
-			HRAOut <- *output //send HRA-output videre
+			HRAOut <- *output //send HRA-output 
 			fmt.Printf("output: \n")
 			for k, v := range *output {
 				fmt.Printf("%6v :  %+v\n", k, v)

@@ -5,20 +5,16 @@ import (
 	"os"
 	"time"
 
-	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
-	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
+	elev "github.com//HeisLab2025/elev_algo/elevator_io"
+	"github.com//HeisLab2025/elev_algo/fsm"
+	b "github.com//HeisLab2025/nettverk/network/bcast"
+	"github.com//HeisLab2025/nettverk/network/localip"
+	"github.com//HeisLab2025/nettverk/network/peers"
 )
 
 var ID string
 var InfoMap = make(map[string]InformationElev)
 
-// We define some custom struct to send over the network.
-// Note that all members we want to transmit must be public. Any private members
-//
-//	will be received as zero-values.
 
 type ConfirmationState int
 
@@ -35,7 +31,7 @@ type HelloMsg struct {
 
 type InformationElev struct {
 	State        HRAElevState
-	HallRequests [][2]bool // denne bør endres til å holde confirmationState, ikke bool
+	HallRequests [][2]bool 
 	ID           string
 }
 

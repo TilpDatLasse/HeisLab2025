@@ -2,7 +2,7 @@ package timer
 
 import (
 	"time"
-	"github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
+	"github.com//HeisLab2025/elev_algo/elevator_io"
 )
 
 var (
@@ -29,6 +29,7 @@ func Timer_timed_out() bool {
 	return timerActive && get_wall_time() > timerEndTime
 }
 
+//sends true on the reciever-channel when door is timed out
 func Time(reciever chan<- bool) {
 	for {
 		if Timer_timed_out() && !elevator_io.GetObstruction() {
