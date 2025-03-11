@@ -19,8 +19,8 @@ func main() {
 		simPort string
 	)
 
-	flag.StringVar(&id, "id", "0", "id of this peer")
-	flag.StringVar(&simPort, "simPort", "15678", "simulation server port")
+	flag.StringVar(&id, "id", "one", "id of this peer")
+	flag.StringVar(&simPort, "simPort", "15657", "simulation server port")
 	flag.Parse()
 
 	SingElevChans := elev_algo.SingleElevatorChans{

@@ -19,6 +19,14 @@ const (
 	N_BUTTONS = 3
 )
 
+type ConfirmationState int
+
+const (
+	no_call      ConfirmationState = 0
+	unregistered ConfirmationState = 1
+	registered   ConfirmationState = 2
+)
+
 // fra elevator
 type State int
 
@@ -31,13 +39,13 @@ const (
 )
 
 type Elevator struct {
-	Floor    int
-	Dirn     MotorDirection
-	State    State
-	Requests [N_FLOORS][N_BUTTONS]bool
-	OwnRequests [N_FLOORS][N_BUTTONS]bool 
-	Config   ElevatorConfig
-	Obs      bool
+	Floor       int
+	Dirn        MotorDirection
+	State       State
+	Requests    [N_FLOORS][N_BUTTONS]ConfirmationState
+	OwnRequests [N_FLOORS][N_BUTTONS]bool
+	Config      ElevatorConfig
+	Obs         bool
 }
 
 type ElevatorConfig struct {
@@ -55,7 +63,7 @@ type ElevatorInputDevice struct {
 
 type ElevatorOutputDevice struct {
 	FloorIndicator     func(int)
-	RequestButtonLight func(ButtonType, int, bool)
+	RequestButtonLight func(ButtonType, int, ConfirmationState)
 	DoorLight          func(bool)
 	StopButtonLight    func(bool)
 	MotorDirection     func(MotorDirection)
@@ -132,7 +140,7 @@ func SetState(channel chan State) {
 func SetButtonLampsOff() {
 	for f := 0; f < _numFloors; f++ {
 		for b := ButtonType(0); b < 3; b++ {
-			SetButtonLamp(b, f, false)
+			SetButtonLamp(b, f, 0)
 		}
 	}
 }
@@ -141,8 +149,12 @@ func SetMotorDirection(dir MotorDirection) {
 	write([4]byte{1, byte(dir), 0, 0})
 }
 
-func SetButtonLamp(button ButtonType, floor int, value bool) {
-	write([4]byte{2, byte(button), byte(floor), toByte(value)})
+func SetButtonLamp(button ButtonType, floor int, value ConfirmationState) {
+	boolValue := false
+	if value == 2 {
+		boolValue = true
+	}
+	write([4]byte{2, byte(button), byte(floor), toByte(boolValue)})
 }
 
 func SetFloorIndicator(floor int) {

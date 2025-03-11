@@ -14,19 +14,12 @@ import (
 
 var ID string
 var InfoMap = make(map[string]InformationElev)
+var WorldView [4][2]elev.ConfirmationState = [4][2]elev.ConfirmationState{{0, 0}, {0, 0}, {0, 0}, {0, 0}}
 
 // We define some custom struct to send over the network.
 // Note that all members we want to transmit must be public. Any private members
 //
 //	will be received as zero-values.
-
-type ConfirmationState int
-
-const (
-	no_call      ConfirmationState = 0
-	unregistered ConfirmationState = 1
-	registered   ConfirmationState = 2
-)
 
 type HelloMsg struct {
 	Message string
@@ -35,7 +28,7 @@ type HelloMsg struct {
 
 type InformationElev struct {
 	State        HRAElevState
-	HallRequests [][2]bool // denne bør endres til å holde confirmationState, ikke bool
+	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
 	ID           string
 }
 
@@ -73,6 +66,56 @@ func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 	}
 }
 
+func CompareAndUpdateWV() {
+	if len(InfoMap) == 0 {
+		panic("Infomap er tomt!")
+	}
+
+	for i := 0; i < elev.N_FLOORS; i++ {
+		for j := 0; j < elev.N_BUTTONS; j++ {
+			allEqual := true
+			listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+			k := 0
+			firstSet := false
+			var firstValue elev.ConfirmationState
+			for _, elev := range InfoMap {
+				if !firstSet {
+					firstValue = elev.HallRequests[i][j]
+					listOfElev[k] = elev.HallRequests[i][j]
+					firstSet = true
+				} else if elev.HallRequests[i][j] != firstValue {
+					allEqual = false
+				}
+				k++
+			}
+			if !allEqual {
+				newValue := cyclicUpdate(listOfElev)
+				for _, elev := range InfoMap {
+					elev.HallRequests[i][j] = newValue
+				}
+			}
+		}
+	}
+}
+
+func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
+	isPresent := map[elev.ConfirmationState]bool{} // map som lagrer om hver confimationstate er tilstede
+	for _, v := range list {
+		isPresent[v] = true
+	}
+	switch {
+	case isPresent[0] && isPresent[1] && isPresent[2]:
+		panic("Confirmationstates 0,1,2 at the same time :(")
+	case isPresent[1] && isPresent[2]: // 1 → 2
+		return 2
+	case isPresent[2] && isPresent[0]: // 2 → 0
+		return 0
+	case isPresent[0] && isPresent[1]: // 0 → 1
+		return 1
+	}
+	return 0 //default
+}
+
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 
 	if id == "" {
@@ -99,7 +142,9 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
 		case a := <-ch_HRAInputRx:
-			InfoMap[a.ID] = a
+			if a.ID != "" {
+				InfoMap[a.ID] = a
+			}
 		}
 	}
 }
@@ -107,11 +152,11 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 // konverterer en elev.elevator-variabel til en InformationElev-variabel
 func Converter(e elev.Elevator) InformationElev {
 	rawInput := e
-	hallRequests := make([][2]bool, len(rawInput.Requests))
-	cabRequests := make([]bool, len(rawInput.Requests))
+	hallRequests := make([][2]elev.ConfirmationState, len(rawInput.Requests))
+	cabRequests := make([]elev.ConfirmationState, len(rawInput.Requests))
 
 	for i := 0; i < len(rawInput.Requests); i++ {
-		hallRequests[i] = [2]bool{rawInput.Requests[i][0], rawInput.Requests[i][1]}
+		hallRequests[i] = [2]elev.ConfirmationState{rawInput.Requests[i][0], rawInput.Requests[i][1]}
 		cabRequests[i] = rawInput.Requests[i][2]
 	}
 
@@ -121,7 +166,7 @@ func Converter(e elev.Elevator) InformationElev {
 			Behavior:    stateToString(rawInput.State),
 			Floor:       rawInput.Floor,
 			Direction:   dirnToString(rawInput.Dirn),
-			CabRequests: cabRequests,
+			CabRequests: cabToBool(cabRequests),
 		},
 	}
 	return input
@@ -167,4 +212,13 @@ func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool)
 			}
 		}
 	}
+}
+
+func cabToBool(list []elev.ConfirmationState) []bool {
+	boolList := make([]bool, len(list))
+	for i, v := range list {
+		boolList[i] = v != 0 // Convert non-zero values to true, zero to false
+	}
+
+	return boolList
 }

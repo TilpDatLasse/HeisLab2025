@@ -39,7 +39,7 @@ func Fsm_onInitBetweenFloors() {
 }
 
 func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
-	elevator.Requests[btnFloor][btnType] = true
+	elevator.Requests[btnFloor][btnType] = 1
 
 	if btnType == 2 { //er cab-request
 		Fsm_OrderInList(btnFloor, btnType)
@@ -55,7 +55,7 @@ func Fsm_OrderInList(btnFloor int, btnType int) {
 	case elev.DOOROPEN:
 		if requests_shouldClearImmediately(elevator, btnFloor, btnType) {
 			elevator.OwnRequests[btnFloor][btnType] = false
-			elevator.Requests[btnFloor][btnType] = false
+			elevator.Requests[btnFloor][btnType] = 0
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
 
 			Fsm_onDoorTimeout()
@@ -231,34 +231,34 @@ func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 		}
 	case elev.CV_InDirn:
 		e.OwnRequests[e.Floor][elev.B_Cab] = false
-		e.Requests[e.Floor][elev.B_Cab] = false
+		e.Requests[e.Floor][elev.B_Cab] = 0
 		switch e.Dirn {
 		case elev.MD_Up:
 			if !requests_above(e) && !e.OwnRequests[e.Floor][elev.B_HallUp] {
 				e.OwnRequests[e.Floor][elev.B_HallDown] = false
-				e.Requests[e.Floor][elev.B_HallDown] = false
+				e.Requests[e.Floor][elev.B_HallDown] = 0
 			}
 			e.OwnRequests[e.Floor][elev.B_HallUp] = false
-			e.Requests[e.Floor][elev.B_HallUp] = false
+			e.Requests[e.Floor][elev.B_HallUp] = 0
 
 		case elev.MD_Down:
 			if !requests_below(e) && !e.OwnRequests[e.Floor][elev.B_HallDown] {
 				e.OwnRequests[e.Floor][elev.B_HallUp] = false
-				e.Requests[e.Floor][elev.B_HallUp] = false
+				e.Requests[e.Floor][elev.B_HallUp] = 0
 			}
 			e.OwnRequests[e.Floor][elev.B_HallDown] = false
-			e.Requests[e.Floor][elev.B_HallDown] = false
+			e.Requests[e.Floor][elev.B_HallDown] = 0
 		case elev.MD_Stop:
 			e.OwnRequests[e.Floor][elev.B_HallUp] = false
-			e.Requests[e.Floor][elev.B_HallUp] = false
+			e.Requests[e.Floor][elev.B_HallUp] = 0
 			e.OwnRequests[e.Floor][elev.B_HallDown] = false
-			e.Requests[e.Floor][elev.B_HallDown] = false
+			e.Requests[e.Floor][elev.B_HallDown] = 0
 
 		default:
 			e.OwnRequests[e.Floor][elev.B_HallUp] = false
-			e.Requests[e.Floor][elev.B_HallUp] = false
+			e.Requests[e.Floor][elev.B_HallUp] = 0
 			e.OwnRequests[e.Floor][elev.B_HallDown] = false
-			e.Requests[e.Floor][elev.B_HallDown] = false
+			e.Requests[e.Floor][elev.B_HallDown] = 0
 		}
 	}
 	return e

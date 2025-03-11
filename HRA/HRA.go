@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
@@ -32,7 +33,7 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 		for key := range nettverk.InfoMap {
 			elevstate := nettverk.InfoMap[key].State
 			input.States[key] = elevstate
-			input.HallRequests = nettverk.InfoMap[key].HallRequests
+			input.HallRequests = hallToBool(nettverk.InfoMap[key].HallRequests) //koverterer fra confirmationstate til bool her
 		}
 
 		if len(nettverk.InfoMap) > 0 {
@@ -62,4 +63,13 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 			}
 		}
 	}
+}
+
+func hallToBool(hallReqList [][2]elev.ConfirmationState) [][2]bool {
+	boolList := make([][2]bool, len(hallReqList))
+	for i, v := range hallReqList {
+		boolList[i][0] = v[0] != 0
+		boolList[i][1] = v[1] != 0
+	}
+	return boolList
 }
