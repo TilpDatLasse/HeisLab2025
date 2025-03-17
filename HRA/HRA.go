@@ -11,7 +11,7 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
-func HRAMain(HRAOut chan map[string][][2]bool) {
+func HRAMain(HRAOut chan map[string][][2]bool, ch_toSync chan map[string]nettverk.InformationElev, ch_fromSync chan map[string]nettverk.InformationElev, ) {
 
 	hraExecutable := ""
 	switch runtime.GOOS {
@@ -24,8 +24,16 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 	}
 
 	for {
+		fmt.Printf("InfoMap: ")
+		for k, v := range nettverk.InfoMap {
+			fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
+		}
 
 		time.Sleep(4000 * time.Millisecond)
+
+		ch_toSync <- nettverk.InfoMap  //sender infomap til synking
+
+		nettverk.InfoMap = <- ch_fromSync  //får synket infomap tilbake, denne blokkerer til alle er synket
 
 		var input nettverk.HRAInput
 		input.States = make(map[string]nettverk.HRAElevState)
@@ -68,8 +76,8 @@ func HRAMain(HRAOut chan map[string][][2]bool) {
 func hallToBool(hallReqList [][2]elev.ConfirmationState) [][2]bool {
 	boolList := make([][2]bool, len(hallReqList))
 	for i, v := range hallReqList {
-		boolList[i][0] = v[0] != 0
-		boolList[i][1] = v[1] != 0
+		boolList[i][0] = v[0] == 2
+		boolList[i][1] = v[1] == 2
 	}
 	return boolList
 }

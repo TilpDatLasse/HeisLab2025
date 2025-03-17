@@ -10,15 +10,16 @@ import (
 	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
+
 )
 
 var ID string
 var InfoMap = make(map[string]InformationElev)
 var WorldView [4][2]elev.ConfirmationState = [4][2]elev.ConfirmationState{{0, 0}, {0, 0}, {0, 0}, {0, 0}}
+var HRArequest bool
 
 // We define some custom struct to send over the network.
 // Note that all members we want to transmit must be public. Any private members
-//
 //	will be received as zero-values.
 
 type HelloMsg struct {
@@ -29,6 +30,7 @@ type HelloMsg struct {
 type InformationElev struct {
 	State        HRAElevState
 	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
+	ReadyForHRA  elev.ConfirmationState  // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
 	ID           string
 }
 
@@ -47,9 +49,16 @@ type HRAInput struct {
 // henter status fra heisen og sender på channel som en informationElev-variabel
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
+		for HRArequest{
+			// ingenting
+			time.Sleep(10 * time.Millisecond)
+		}
 		info := Converter(fsm.FetchElevatorStatus())
 		info.ID = ID
 		ch_HRAInputTx <- info
+		if HRArequest {
+			info.ReadyForHRA = 1
+		}
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
@@ -66,55 +75,6 @@ func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 	}
 }
 
-func CompareAndUpdateWV() {
-	if len(InfoMap) == 0 {
-		panic("Infomap er tomt!")
-	}
-
-	for i := 0; i < elev.N_FLOORS; i++ {
-		for j := 0; j < elev.N_BUTTONS; j++ {
-			allEqual := true
-			listOfElev := make([]elev.ConfirmationState, len(InfoMap))
-			k := 0
-			firstSet := false
-			var firstValue elev.ConfirmationState
-			for _, elev := range InfoMap {
-				if !firstSet {
-					firstValue = elev.HallRequests[i][j]
-					listOfElev[k] = elev.HallRequests[i][j]
-					firstSet = true
-				} else if elev.HallRequests[i][j] != firstValue {
-					allEqual = false
-				}
-				k++
-			}
-			if !allEqual {
-				newValue := cyclicUpdate(listOfElev)
-				for _, elev := range InfoMap {
-					elev.HallRequests[i][j] = newValue
-				}
-			}
-		}
-	}
-}
-
-func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
-	isPresent := map[elev.ConfirmationState]bool{} // map som lagrer om hver confimationstate er tilstede
-	for _, v := range list {
-		isPresent[v] = true
-	}
-	switch {
-	case isPresent[0] && isPresent[1] && isPresent[2]:
-		panic("Confirmationstates 0,1,2 at the same time :(")
-	case isPresent[1] && isPresent[2]: // 1 → 2
-		return 2
-	case isPresent[2] && isPresent[0]: // 2 → 0
-		return 0
-	case isPresent[0] && isPresent[1]: // 0 → 1
-		return 1
-	}
-	return 0 //default
-}
 
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 
@@ -141,10 +101,15 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-ch_HRAInputRx:
+		case a := <-ch_HRAInputRx:  //heartbeat med info mottatt
 			if a.ID != "" {
 				InfoMap[a.ID] = a
+				if a.ReadyForHRA != 0{  //hvis mottar at noen vil synke
+					HRArequest = true // burde egt hente status fra egen heis før denne settes true
+				}
 			}
+		// case a := <-ch_fromSync:
+		// 	InfoMap = a
 		}
 	}
 }

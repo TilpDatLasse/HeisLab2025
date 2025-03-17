@@ -1,7 +1,6 @@
 package fsm
 
 import (
-
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
 )

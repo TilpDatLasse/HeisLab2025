@@ -9,6 +9,7 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo"
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"github.com/TilpDatLasse/HeisLab2025/sync"
 )
 
 func main() {
@@ -35,14 +36,17 @@ func main() {
 	ch_HRAOut := make(chan map[string][][2]bool)
 	ch_HRAInputTx := make(chan nettverk.InformationElev)
 	ch_HRAInputRx := make(chan nettverk.InformationElev)
+	ch_toSync := make(chan map[string]nettverk.InformationElev)   //sender infomap
+	ch_fromSync := make(chan map[string]nettverk.InformationElev) //sender infomap
 
 	go elev_algo.Elev_main(SingElevChans, simPort)
 	go nettverk.Nettverk_hoved(ch_HRAInputRx, id)
-	go HRA.HRAMain(ch_HRAOut)
+	go HRA.HRAMain(ch_HRAOut, ch_toSync, ch_fromSync)
 	go nettverk.SetElevatorStatus(ch_HRAInputTx)
 	go nettverk.RecieveElevatorStatus(ch_HRAInputRx)
 	go nettverk.BroadcastElevatorStatus(ch_HRAInputTx)
 	go nettverk.FromHRA(ch_HRAOut, SingElevChans.Single_elev_queue)
+	go sync.CompareAndUpdateWV(ch_toSync, ch_fromSync)
 
 	select {}
 
