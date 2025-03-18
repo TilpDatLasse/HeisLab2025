@@ -10,7 +10,6 @@ import (
 	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
-
 )
 
 var ID string
@@ -30,7 +29,7 @@ type HelloMsg struct {
 type InformationElev struct {
 	State        HRAElevState
 	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
-	ReadyForHRA  elev.ConfirmationState  // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
+	ReadyForHRA  elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
 	ID           string
 }
 
@@ -49,7 +48,7 @@ type HRAInput struct {
 // henter status fra heisen og sender på channel som en informationElev-variabel
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
-		for HRArequest{
+		for HRArequest {
 			// ingenting
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -59,13 +58,21 @@ func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 		if HRArequest {
 			info.ReadyForHRA = 1
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
+
+		/*
+			fmt.Printf("InfoMap: ")
+			for k, v := range InfoMap {
+				fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
+			}
+		*/
 	}
 }
 
 func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
 		b.Transmitter(14000, ch_HRAInputTx)
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
 
@@ -74,7 +81,6 @@ func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 		b.Receiver(14000, ch_HRAInputRx)
 	}
 }
-
 
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 
@@ -101,15 +107,16 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-ch_HRAInputRx:  //heartbeat med info mottatt
+		case a := <-ch_HRAInputRx: //heartbeat med info mottatt
 			if a.ID != "" {
 				InfoMap[a.ID] = a
-				if a.ReadyForHRA != 0{  //hvis mottar at noen vil synke
+
+				if a.ReadyForHRA != 0 { //hvis mottar at noen vil synke
 					HRArequest = true // burde egt hente status fra egen heis før denne settes true
 				}
 			}
-		// case a := <-ch_fromSync:
-		// 	InfoMap = a
+			// case a := <-ch_fromSync:
+			// 	InfoMap = a
 		}
 	}
 }

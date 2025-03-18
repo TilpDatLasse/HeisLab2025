@@ -1,6 +1,8 @@
 package fsm
 
 import (
+	"fmt"
+
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
 )
@@ -55,6 +57,7 @@ func Fsm_OrderInList(btnFloor int, btnType int) {
 		if requests_shouldClearImmediately(elevator, btnFloor, btnType) {
 			elevator.OwnRequests[btnFloor][btnType] = false
 			elevator.Requests[btnFloor][btnType] = 0
+			fmt.Println("cleared")
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
 
 			Fsm_onDoorTimeout()
@@ -261,4 +264,13 @@ func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 		}
 	}
 	return e
+}
+
+func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) {
+	//fmt.Println("from infomap: ", hallRequests)
+	for i := 0; i < len(hallRequests); i++ {
+		elevator.Requests[i][0] = hallRequests[i][0]
+		elevator.Requests[i][1] = hallRequests[i][1]
+		//fmt.Println("updating hallrequests%v", i)
+	}
 }

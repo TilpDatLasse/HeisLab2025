@@ -11,7 +11,7 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
-func HRAMain(HRAOut chan map[string][][2]bool, ch_toSync chan map[string]nettverk.InformationElev, ch_fromSync chan map[string]nettverk.InformationElev, ) {
+func HRAMain(HRAOut chan map[string][][2]bool, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_toSync chan map[string]nettverk.InformationElev, ch_fromSync chan map[string]nettverk.InformationElev) {
 
 	hraExecutable := ""
 	switch runtime.GOOS {
@@ -24,16 +24,13 @@ func HRAMain(HRAOut chan map[string][][2]bool, ch_toSync chan map[string]nettver
 	}
 
 	for {
-		fmt.Printf("InfoMap: ")
-		for k, v := range nettverk.InfoMap {
-			fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
-		}
 
-		time.Sleep(4000 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 
-		ch_toSync <- nettverk.InfoMap  //sender infomap til synking
+		ch_toSync <- nettverk.InfoMap //sender infomap til synking
 
-		nettverk.InfoMap = <- ch_fromSync  //får synket infomap tilbake, denne blokkerer til alle er synket
+		nettverk.InfoMap = <-ch_fromSync //får synket infomap tilbake, denne blokkerer til alle er synket
+		ch_syncRequestsSingleElev <- nettverk.InfoMap[nettverk.ID].HallRequests
 
 		var input nettverk.HRAInput
 		input.States = make(map[string]nettverk.HRAElevState)
@@ -65,10 +62,12 @@ func HRAMain(HRAOut chan map[string][][2]bool, ch_toSync chan map[string]nettver
 				return
 			}
 			HRAOut <- *output //send HRA-output videre
-			fmt.Printf("output: \n")
-			for k, v := range *output {
-				fmt.Printf("%6v :  %+v\n", k, v)
-			}
+			/*
+				fmt.Printf("output: \n")
+				for k, v := range *output {
+					//fmt.Printf("%6v :  %+v\n", k, v)
+				}
+			*/
 		}
 	}
 }
