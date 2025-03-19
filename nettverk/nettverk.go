@@ -3,6 +3,7 @@ package nettverk
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
@@ -10,27 +11,29 @@ import (
 	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
-
 )
 
 var ID string
 var InfoMap = make(map[string]InformationElev)
-var WorldView [4][2]elev.ConfirmationState = [4][2]elev.ConfirmationState{{0, 0}, {0, 0}, {0, 0}, {0, 0}}
-var HRArequest bool
 
-// We define some custom struct to send over the network.
-// Note that all members we want to transmit must be public. Any private members
-//	will be received as zero-values.
+var myWorldView = WorldView{
+	InfoMap: make(map[string]InformationElev), // Initialiserer mappet
+}
 
-type HelloMsg struct {
-	Message string
-	Iter    int
+var WorldViewMap = make(map[string]WorldView) // map som holder alle sine wvs
+// trenger ikke bruke denne som heartbeat, kan informationElev til det
+var shouldSync bool = false
+var infoElev InformationElev
+
+type WorldView struct {
+	InfoMap map[string]InformationElev
+	Id      string
 }
 
 type InformationElev struct {
 	State        HRAElevState
 	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
-	ReadyForHRA  elev.ConfirmationState  // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
+	Locked       elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
 	ID           string
 }
 
@@ -47,36 +50,52 @@ type HRAInput struct {
 }
 
 // henter status fra heisen og sender på channel som en informationElev-variabel
-func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
+func SetElevatorStatus(ch_HRAInputTx chan InformationElev, ch_WVTx chan WorldView) {
 	for {
-		for HRArequest{
-			// ingenting
-			time.Sleep(10 * time.Millisecond)
+		//fmt.Println("setelevatorstatus ", infoElev.ID)
+		//info := Converter(fsm.FetchElevatorStatus()) // skal egt ikke være her
+		if infoElev.Locked == 0 {
+			infoElev = Converter(fsm.FetchElevatorStatus())
+			if shouldSync {
+				infoElev.Locked = 1
+			}
 		}
-		info := Converter(fsm.FetchElevatorStatus())
-		info.ID = ID
-		ch_HRAInputTx <- info
-		if HRArequest {
-			info.ReadyForHRA = 1
+		infoElev.ID = ID
+		myWorldView.Id = ID
+		select {
+		case ch_HRAInputTx <- infoElev:
+			//fmt.Println("DEBUG 1", infoElev)
+		default:
+			fmt.Println("Advarsel: Mistet en elevatorstatusmelding (kanal full)")
 		}
+		select {
+		case ch_WVTx <- myWorldView:
+			//fmt.Println("DEBUG 1", infoElev)
+		default:
+			fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
+		}
+		//fmt.Println("DEBUG 2")
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
 
 func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev) {
-	for {
-		b.Transmitter(14000, ch_HRAInputTx)
-	}
+	b.Transmitter(14000, ch_HRAInputTx)
 }
 
 func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
-	for {
-		b.Receiver(14000, ch_HRAInputRx)
-	}
+	b.Receiver(14000, ch_HRAInputRx)
 }
 
+func BroadcastWV(ch_WVTx chan WorldView) {
+	b.Transmitter(15000, ch_WVTx)
+}
 
-func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
+func RecieveWV(ch_WVRx chan WorldView) {
+	b.Receiver(15000, ch_WVRx)
+}
+
+func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, ch_shouldSync chan bool, ch_fromSync chan map[string]InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, id string) {
 
 	if id == "" {
 		localIP, err := localip.LocalIP()
@@ -87,6 +106,7 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
 	ID = id
+	//myWorldView.id = ID
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
@@ -101,16 +121,40 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-ch_HRAInputRx:  //heartbeat med info mottatt
+		case a := <-ch_HRAInputRx: //heartbeat med info mottatt
+			fmt.Println("Recieved heartbeat: ", a.HallRequests)
+			//fmt.Println("InfoMap: ")
+			//for k, v := range InfoMap {
+			//fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
+			//}
 			if a.ID != "" {
 				InfoMap[a.ID] = a
-				if a.ReadyForHRA != 0{  //hvis mottar at noen vil synke
-					HRArequest = true // burde egt hente status fra egen heis før denne settes true
+				myWorldView.InfoMap = InfoMap
+				CompareAndUpdateInfoMap()
+				ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests //må nok bruke mutex her, for å sikre at ikke noen sender noe før vi har fått endret sigle elevs hallrequests
+				if a.Locked != 0 && !shouldSync {                     //hvis mottar at noen vil synke for første gang
+					shouldSync = true
+					//SetElevatorStatus(ch_HRAInputRx) //henter info siste gang før synk og låser info
+					go Sync(ch_shouldSync)
 				}
 			}
-		// case a := <-ch_fromSync:
-		// 	InfoMap = a
+		case syncRequest := <-ch_shouldSync:
+			if syncRequest {
+				shouldSync = true
+				//SetElevatorStatus(ch_HRAInputRx) //henter info siste gang før synk og låser info
+				go Sync(ch_shouldSync)
+			} else { //syncRequest == false, synk ferdig
+				ch_fromSync <- InfoMap
+				shouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp
+			}
+
+		case wv := <-ch_WVRx: //worldview mottatt (dette skjer bare når vi holder på å synke)
+			fmt.Println("Recieved WorldView from id: ", wv.Id)
+			if wv.Id != "" {
+				WorldViewMap[wv.Id] = wv
+			}
 		}
+
 	}
 }
 
@@ -167,6 +211,15 @@ func dirnToString(s elev.MotorDirection) string {
 	}
 }
 
+func cabToBool(list []elev.ConfirmationState) []bool {
+	boolList := make([]bool, len(list))
+	for i, v := range list {
+		boolList[i] = v != 0 // Convert non-zero values to true, zero to false
+	}
+
+	return boolList
+}
+
 // Henter output fra HRA og sender videre til elev-modulen
 func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool) {
 	for {
@@ -179,11 +232,158 @@ func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool)
 	}
 }
 
-func cabToBool(list []elev.ConfirmationState) []bool {
-	boolList := make([]bool, len(list))
-	for i, v := range list {
-		boolList[i] = v != 0 // Convert non-zero values to true, zero to false
+// fra sync
+
+func Sync(ch_shouldSync chan bool) {
+	for {
+		if AllWorldViewsEqual(WorldViewMap) {
+			ch_shouldSync <- false
+			fmt.Println("All worldviews are equal")
+			break
+		} else {
+			fmt.Println("Worldviews are not equal")
+		}
+		time.Sleep(1000 * time.Millisecond)
+	}
+}
+
+func CompareAndUpdateInfoMap() {
+	//infoMap := <-ch_toSync
+	if len(InfoMap) != 0 {
+		//denne delen sammenlikner hallrequests og oppdaterer de
+		for i := 0; i < elev.N_FLOORS; i++ {
+			for j := 0; j < elev.N_BUTTONS-1; j++ {
+				listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+				k := 0
+				for _, elev := range InfoMap {
+					listOfElev[k] = elev.HallRequests[i][j]
+					k++
+				}
+				update := cyclicUpdate(listOfElev)
+
+				for _, elev := range InfoMap {
+					elev.HallRequests[i][j] = update
+				}
+			}
+		}
+		// denne delen sammenlikner locked og oppdaterer
+		listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+		k := 0
+		for _, elev := range InfoMap {
+			listOfElev[k] = elev.Locked
+			k++
+		}
+		update := cyclicUpdate(listOfElev)
+
+		for key, elev := range InfoMap {
+			elev.Locked = update
+			InfoMap[key] = elev
+		}
+	}
+	//ch_fromSync <- infoMap
+}
+
+// hjelpefunksjon for CompareAndUpdateWV
+func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
+	isPresent := map[elev.ConfirmationState]bool{} // map som lagrer om hver confimationstate(0,1,2) er tilstede
+	for _, v := range list {
+		isPresent[v] = true
+	}
+	switch {
+	case isPresent[0] && isPresent[1] && isPresent[2]:
+		panic("Confirmationstates 0,1,2 at the same time :(")
+	case !isPresent[0]: // alle har 1 eller 2
+		//fmt.Println("Order registrerd on all peers, Confirmed!")
+		return 2
+	case isPresent[2] && isPresent[0]: // alle har 0 eller 2 (noen har utført ordren)
+		return 0
+	case isPresent[0] && isPresent[1]: // alle har 0 eller 1 (noen har fått en ny ordre)
+		return 1
+	}
+	return 0 //default
+}
+
+// func allSynced(wvMap map[string]nettverk.WorldView) bool {
+// 	var firstElev nettverk.InformationElev
+// 	isFirst := true
+
+// 	for _, elev := range wvMap {
+// 		if isFirst {
+// 			firstElev.HallRequests = elev.HallRequests
+// 			isFirst = false
+// 		} else {
+// 			for i := 0; i < len(m); i++ {
+// 				firstPair := firstElev.HallRequests[i]
+// 				for _, s := range elev.HallRequests[1:] {
+// 					if s != firstPair {
+// 						return false
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return true
+// }
+
+func AllWorldViewsEqual(worldViewMap map[string]WorldView) bool {
+	var reference *WorldView
+	isFirst := true
+
+	for _, worldView := range worldViewMap {
+		if isFirst {
+			reference = &worldView
+			isFirst = false
+			continue
+		}
+
+		if !reflect.DeepEqual(reference.InfoMap, worldView.InfoMap) {
+			return false
+		}
 	}
 
-	return boolList
+	
+	// OBS: denne får koden til å kræsje men nødvendig for å sjekke om alle peers har låst infoen sin for synking
+	// wv := worldViewMap[ID]
+	// for id, elev := range wv.InfoMap {
+	// 	if elev.Locked != 2 {
+	// 		fmt.Printf("Elevator with ID %s is not locked (Locked=%d)\n", id, elev.Locked)
+	// 		return false
+	// 	}
+	// }
+
+	return true
+}
+
+// returnerer true hvis alle heiser holder samme liste med hallrequests
+// må endre så den også sammenlikner andre egenskaper, og sjekker om alle er låst
+// func allSynced(m map[string]nettverk.InformationElev) bool {
+// 	var firstElev nettverk.InformationElev
+// 	isFirst := true
+
+// 	for _, elev := range m {
+// 		if isFirst {
+// 			firstElev.HallRequests = elev.HallRequests
+// 			isFirst = false
+// 		} else {
+// 			for i := 0; i < len(m); i++ {
+// 				firstPair := firstElev.HallRequests[i]
+// 				for _, s := range elev.HallRequests[1:] {
+// 					if s != firstPair {
+// 						return false
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return true
+// }
+
+func PrintTest() {
+	for {
+		fmt.Println("InfoMap: ")
+		for k, v := range InfoMap {
+			fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
+		}
+		time.Sleep(5000 * time.Millisecond)
+	}
 }

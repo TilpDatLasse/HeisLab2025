@@ -11,7 +11,19 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
-func HRAMain(HRAOut chan map[string][][2]bool, ch_toSync chan map[string]nettverk.InformationElev, ch_fromSync chan map[string]nettverk.InformationElev, ) {
+// type HRAElevState struct {
+// 	Behavior    string `json:"behaviour"`
+// 	Floor       int    `json:"floor"`
+// 	Direction   string `json:"direction"`
+// 	CabRequests []bool `json:"cabRequests"`
+// }
+
+// type HRAInput struct {
+// 	HallRequests [][2]bool               `json:"hallRequests"`
+// 	States       map[string]HRAElevState `json:"states"`
+// }
+
+func HRAMain(HRAOut chan map[string][][2]bool, ch_shouldSync chan bool, ch_fromSync chan map[string]nettverk.InformationElev) {
 
 	hraExecutable := ""
 	switch runtime.GOOS {
@@ -24,27 +36,31 @@ func HRAMain(HRAOut chan map[string][][2]bool, ch_toSync chan map[string]nettver
 	}
 
 	for {
-		fmt.Printf("InfoMap: ")
-		for k, v := range nettverk.InfoMap {
-			fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
-		}
+		
+		// fmt.Printf("InfoMap: ")
+		// for k, v := range nettverk.InfoMap {
+		// 	fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
+		// }
 
 		time.Sleep(4000 * time.Millisecond)
 
-		ch_toSync <- nettverk.InfoMap  //sender infomap til synking
+		
+		ch_shouldSync <- true  //forespørsel om synking
 
-		nettverk.InfoMap = <- ch_fromSync  //får synket infomap tilbake, denne blokkerer til alle er synket
+		infoMap := <- ch_fromSync  //venter på at synking er ferdig
+
+		
 
 		var input nettverk.HRAInput
 		input.States = make(map[string]nettverk.HRAElevState)
 
-		for key := range nettverk.InfoMap {
-			elevstate := nettverk.InfoMap[key].State
+		for key := range infoMap {
+			elevstate := infoMap[key].State
 			input.States[key] = elevstate
-			input.HallRequests = hallToBool(nettverk.InfoMap[key].HallRequests) //koverterer fra confirmationstate til bool her
+			input.HallRequests = hallToBool(infoMap[key].HallRequests) //koverterer fra confirmationstate til bool
 		}
 
-		if len(nettverk.InfoMap) > 0 {
+		if len(infoMap) > 0 {
 			jsonBytes, err := json.Marshal(input)
 			if err != nil {
 				fmt.Println("json.Marshal error: ", err)

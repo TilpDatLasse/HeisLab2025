@@ -262,3 +262,10 @@ func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 	}
 	return e
 }
+
+func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) {
+	for i := 0; i < len(hallRequests); i++ {
+		elevator.Requests[i][0] = hallRequests[i][0]
+		elevator.Requests[i][1] = hallRequests[i][1]
+	}
+}

@@ -2,6 +2,7 @@ package sync
 
 import (
 	"fmt"
+	"reflect"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
@@ -13,26 +14,34 @@ import (
 
 //må oppdatere elevator-variabalen i fsm så den vet om en ordre blir tatt av noen andre
 
-
 //Forslag til hvordan synkingen kan løses:
-//Legge inn en til confirmationstat-variabel som brukes for å vise andre heiser at man er klar
+//Legge inn en til confirmationstat-variabel ("Locked") som brukes for å vise andre heiser at man er klar
 // til å sende verdensbildet sitt til hra. når alle er enige om å sende (samme) verdensbilde må verdensbiledene
 // låses og kan ikke endres før alle bekrefter at de har sendt til hra elns.
 // Kan starte med at hra-en sender en request om å få status, og da henter heisen info fra sin heis og låser,
 // før den broadcaster at den er klar til å sende til hra. når andre heiser mottar dette må de gjøre det samme,
 // til alle er klar til å sende samme verdensbilde til hra og gjør dette.
 
-// Hvis !allSynced etter at vi har kjørt compareAndUpdateWV én gang, må annen info for en av heisene være ulik,
-// og vi må broadcaste på nytt for å få synket 
-// evt: alle broadcaster en gang etter de har blitt låst, da skal vel alle ende opp med samme?
-
 // synker wv før infomap sendes til hra
 // sammenligner alle hallrequest-listene som ligger i hra og synkroniserer/oppdaterer dersom confirmationstate
 // tillater det.
+// broadcaster og sammenlikner også hele worldView til hver peer, så alle sender akkurat samme info til HRA
+
+func Sync() {
+	for{
+		if AllWorldViewsEqual(nettverk.WorldViewMap) {
+			ch_shouldSync <- false
+			break
+			//fmt.Println("All worldviews are equal")
+		} else {
+			//fmt.Println("Worldviews are not equal")
+		}
+	}
+}
+
 func CompareAndUpdateWV(ch_toSync chan map[string]nettverk.InformationElev, ch_fromSync chan map[string]nettverk.InformationElev) {
-	allSynced := false
-	for !allSynced {
-		infoMap := <-ch_toSync
+	infoMap := <-ch_toSync
+	for allSynced(infoMap) {
 		if len(infoMap) == 0 {
 			//panic("Infomap er tomt!")
 		} else {
@@ -51,13 +60,13 @@ func CompareAndUpdateWV(ch_toSync chan map[string]nettverk.InformationElev, ch_f
 					}
 				}
 			}
-		
+
 		}
 		ch_fromSync <- infoMap
 	}
 }
 
-//hjelpefunksjon for CompareAndUpdateWV
+// hjelpefunksjon for CompareAndUpdateWV
 func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
 	isPresent := map[elev.ConfirmationState]bool{} // map som lagrer om hver confimationstate(0,1,2) er tilstede
 	for _, v := range list {
@@ -77,25 +86,68 @@ func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
 	return 0 //default
 }
 
-//returnerer true hvis alle heiser holder samme liste med hallrequests
-func allSynced(m map[string]nettverk.InformationElev) bool {  
-	var firstElev nettverk.InformationElev
-	isFirst := true
+// func allSynced(wvMap map[string]nettverk.WorldView) bool {
+// 	var firstElev nettverk.InformationElev
+// 	isFirst := true
 
-	for _, elev := range m {
-		if isFirst {
-			firstElev.HallRequests = elev.HallRequests
-			isFirst = false
-		} else {
-			for i := 0; i < len(m); i++ {
-				firstPair := firstElev.HallRequests[i]
-				for _, s := range elev.HallRequests[1:] {
-					if s != firstPair {
-						return false
-					}
-				}
-			}
+// 	for _, elev := range wvMap {
+// 		if isFirst {
+// 			firstElev.HallRequests = elev.HallRequests
+// 			isFirst = false
+// 		} else {
+// 			for i := 0; i < len(m); i++ {
+// 				firstPair := firstElev.HallRequests[i]
+// 				for _, s := range elev.HallRequests[1:] {
+// 					if s != firstPair {
+// 						return false
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return true
+// }
+
+func AllWorldViewsEqual(worldViewMap map[string]nettverk.WorldView) bool {
+	var reference *nettverk.WorldView
+
+	// Gå gjennom alle verdiene i mappet
+	for _, worldView := range worldViewMap {
+		if reference == nil {
+			// Sett første `WorldView` som referanse
+			reference = &worldView
+			continue
+		}
+
+		// Sammenlign hele `InfoMap`
+		if !reflect.DeepEqual(reference.InfoMap, worldView.InfoMap) {
+			return false
 		}
 	}
+
 	return true
 }
+
+// returnerer true hvis alle heiser holder samme liste med hallrequests
+// må endre så den også sammenlikner andre egenskaper, og sjekker om alle er låst
+// func allSynced(m map[string]nettverk.InformationElev) bool {
+// 	var firstElev nettverk.InformationElev
+// 	isFirst := true
+
+// 	for _, elev := range m {
+// 		if isFirst {
+// 			firstElev.HallRequests = elev.HallRequests
+// 			isFirst = false
+// 		} else {
+// 			for i := 0; i < len(m); i++ {
+// 				firstPair := firstElev.HallRequests[i]
+// 				for _, s := range elev.HallRequests[1:] {
+// 					if s != firstPair {
+// 						return false
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return true
+// }
