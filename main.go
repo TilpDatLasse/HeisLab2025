@@ -49,13 +49,9 @@ func main() {
 
 	go HRA.HRAMain(ch_HRAOut, ch_shouldSync, ch_fromSync)
 	go nettverk.SetElevatorStatus(ch_HRAInputTx, ch_WVTx)
-	go nettverk.RecieveElevatorStatus(ch_HRAInputRx)
-	go nettverk.BroadcastElevatorStatus(ch_HRAInputTx)
 	go nettverk.RecieveWV(ch_WVRx)
 	go nettverk.BroadcastWV(ch_WVTx)
 	go nettverk.FromHRA(ch_HRAOut, SingElevChans.Single_elev_queue)
-	//go nettverk.PrintTest()
-	//go sync.CompareAndUpdateWV(ch_toSync, ch_fromSync)
 
 	select {}
 
@@ -67,6 +63,8 @@ func main() {
 //cyclic-counter er viktig, kan implementeres i den opprinnelige hallrequest-listen
 //Worldview er veldig viktig og burde nok være egen modul
 //channels som bare går inn i kun én funksjon er sannsynligvis overflødige.
+
+//viser seg å være lurt å legge til en select når vi skriver til kanal, så blokkerer den ikke selv om den er full (men mister selvfølgelig info)
 
 //må huske å endre så hra sycer når det skjer noe, ikke bare regelmessig
 //burde kalle sync-modulen noe annet, mutex-modulen heter også sync

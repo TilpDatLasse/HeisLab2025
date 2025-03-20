@@ -23,13 +23,11 @@ var myWorldView = WorldView{
 	InfoMap: make(map[string]InformationElev), // Initialiserer mappet
 }
 
-//kan egt bare droppe infomap og bruke worldview til alt, kan bare plukke ut riktig info fra den som sender og oppdatere vårt eget WV
-//feks hvis id "two" sender skal vi plukke ut wv["two"].infoMap["two"] og oppdatere vår egen myworldview.infoMap["two"]
-
 var WorldViewMap = make(map[string]WorldView) // map som holder alle sine wvs
-// trenger ikke bruke denne som heartbeat, kan informationElev til det // trenger egt ikke bruke den heller, peers.transmitter er heartbeat
 var shouldSync bool = false
-var infoElev InformationElev
+var infoElev = InformationElev{
+	ElevID: ID,
+}
 
 type WorldView struct {
 	InfoMap map[string]InformationElev
@@ -40,7 +38,7 @@ type InformationElev struct {
 	State        HRAElevState
 	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
 	Locked       elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
-	ID           string
+	ElevID       string
 }
 
 type HRAElevState struct {
@@ -58,40 +56,27 @@ type HRAInput struct {
 // henter status fra heisen og sender på channel som en informationElev-variabel
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev, ch_WVTx chan WorldView) {
 	for {
-		//fmt.Println("setelevatorstatus ", infoElev.ID)
-		//info := Converter(fsm.FetchElevatorStatus()) // skal egt ikke være her
-		if infoElev.Locked == 0 {
+		if infoElev.Locked == 0 { //hvis ikke låst
 			infoElev = Converter(fsm.FetchElevatorStatus())
-			fmt.Println("infoElev: ", infoElev)
 			if shouldSync {
 				infoElev.Locked = 1
+				fmt.Println("debug 1")
 			}
 		}
-		infoElev.ID = ID
-		myWorldView.Id = ID
-		select {
-		case ch_HRAInputTx <- infoElev:
-			//fmt.Println("DEBUG 1", infoElev)
-		default:
-			fmt.Println("Advarsel: Mistet en elevatorstatusmelding (kanal full)")
+		if ID != "" {
+			infoElev.ElevID = ID
+			InfoMap[ID] = infoElev
+			myWorldView.InfoMap = InfoMap
+
+			select {
+			case ch_WVTx <- myWorldView:
+			default:
+				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
+			}
+			time.Sleep(1000 * time.Millisecond)
 		}
-		select {
-		case ch_WVTx <- myWorldView:
-			//fmt.Println("DEBUG 1", infoElev)
-		default:
-			fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
-		}
-		//fmt.Println("DEBUG 2")
-		time.Sleep(1000 * time.Millisecond)
+
 	}
-}
-
-func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev) {
-	b.Transmitter(14000, ch_HRAInputTx)
-}
-
-func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
-	b.Receiver(14000, ch_HRAInputRx)
 }
 
 func BroadcastWV(ch_WVTx chan WorldView) {
@@ -113,7 +98,8 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, 
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
 	ID = id
-	//myWorldView.id = ID
+	infoElev.ElevID = ID
+	myWorldView.Id = ID
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
@@ -128,37 +114,11 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, 
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-ch_HRAInputRx: //heartbeat med info mottatt
-			//fmt.Println("Recieved heartbeat: ", a.HallRequests)
-			//fmt.Println("InfoMap: ")
-			//for k, v := range InfoMap {
-			//fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
-			//}
-			if a.ID != "" {
-				infoMapMutex.Lock() // Lås mutex før skriving til InfoMap
-				InfoMap[a.ID] = a
-				myWorldView.InfoMap = InfoMap
-				infoMapMutex.Unlock() // Lås opp mutex etter skriving
-				CompareAndUpdateInfoMap()
-				//fmt.Println("Locked: ", InfoMap[a.ID].Locked, "id: ", a.ID)
-
-				infoMapMutex.Lock()                                   // Lås mutex før lesing fra InfoMap
-				ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests //må nok bruke mutex her, for å sikre at ikke noen sender noe før vi har fått endret sigle elevs hallrequests
-				time.Sleep(100 * time.Millisecond)
-				infoMapMutex.Unlock()             // Lås opp mutex etter lesing
-				if a.Locked != 0 && !shouldSync { //hvis mottar at noen vil synke for første gang
-					fmt.Println("Recieved sync request from peer")
-					shouldSync = true
-					//SetElevatorStatus(ch_HRAInputRx) //henter info siste gang før synk og låser info
-					go Sync(ch_shouldSync)
-				}
-			}
 		case syncRequest := <-ch_shouldSync:
 
 			if syncRequest {
-				fmt.Println("Sync request recieved from HRA")
+				fmt.Println("Recieved sync request")
 				shouldSync = true
-				//SetElevatorStatus(ch_HRAInputRx) //henter info siste gang før synk og låser info
 				go Sync(ch_shouldSync)
 			} else { //syncRequest == false, synk ferdig
 				fmt.Println("Sync done!!")
@@ -172,21 +132,39 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, 
 
 				shouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp
 				infoElev.Locked = 0
+				fmt.Println("Locked: ", infoElev.Locked)
 
-				// det er ikke sikkert alle har fått sendt og låst opp, så av og til tror den det kommer en ny syncrequest med en gang
-				// men dette blir vel fikset når vi kjører cyclicupdate på locked også
 			}
 
 		case wv := <-ch_WVRx: //worldview mottatt (dette skjer bare når vi holder på å synke)
-			//fmt.Println("Recieved WorldView from id: ", wv.Id)
-			WVMapMutex.Lock() // Lås mutex før skriving til WorldViewMap
-			if wv.Id != "" {
-				WorldViewMap[wv.Id] = wv
-			}
-			WVMapMutex.Unlock() // Lås opp mutex etter skriving
-		}
-		// time.Sleep(100 * time.Millisecond)
 
+			if wv.Id != "" {
+				WVMapMutex.Lock()
+				WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
+				WVMapMutex.Unlock()
+				if wv.Id != ID {
+					infoMapMutex.Lock()
+					InfoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
+					infoMapMutex.Unlock()
+					CompareAndUpdateInfoMap()
+				} else { //det var vi som sendte, vi kan nå oppdatere vår egen info
+					infoMapMutex.Lock()
+					//InfoMap = wv.InfoMap
+					infoMapMutex.Unlock()
+					CompareAndUpdateInfoMap()
+					myWorldView.InfoMap = InfoMap
+				}
+				infoMapMutex.Lock()
+				ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests //må nok bruke mutex her, for å sikre at ikke noen sender noe før vi har fått endret sigle elevs hallrequests
+				time.Sleep(100 * time.Millisecond)
+				infoMapMutex.Unlock()
+
+				if wv.InfoMap[wv.Id].Locked != 0 && !shouldSync { //hvis mottar at noen vil synke for første gang
+					shouldSync = true
+					go Sync(ch_shouldSync)
+				}
+			}
+		}
 	}
 }
 
@@ -269,12 +247,13 @@ func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool)
 
 func Sync(ch_shouldSync chan bool) {
 	for {
+		CompareAndUpdateInfoMap()
 		if AllWorldViewsEqual(WorldViewMap) {
 			ch_shouldSync <- false
-			//fmt.Println("All worldviews are equal")
+			fmt.Println("All worldviews are equal")
 			break
 		} else {
-			//fmt.Println("Worldviews are not equal")
+			fmt.Println("Worldviews are not equal")
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
@@ -283,14 +262,19 @@ func Sync(ch_shouldSync chan bool) {
 func CompareAndUpdateInfoMap() {
 	infoMapMutex.Lock() // Lås mutex før lesing og skriving til InfoMap
 	defer infoMapMutex.Unlock()
-
+	//fmt.Println("INFO MAP: ", InfoMap)
 	if len(InfoMap) != 0 {
 		//denne delen sammenlikner hallrequests og oppdaterer de
 		for i := 0; i < elev.N_FLOORS; i++ {
 			for j := 0; j < elev.N_BUTTONS-1; j++ {
 				listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+				//fmt.Println("LEN: ", len(InfoMap))
 				k := 0
 				for _, elev := range InfoMap {
+					if elev.HallRequests == nil {
+						return
+					}
+					//fmt.Println("ELEV: ", elev.HallRequests)
 					listOfElev[k] = elev.HallRequests[i][j]
 					k++
 				}
@@ -310,12 +294,15 @@ func CompareAndUpdateInfoMap() {
 		}
 		update := cyclicUpdate(listOfElev)
 
-		for key, elev := range InfoMap {
-			elev.Locked = update
-			InfoMap[key] = elev
+		for key, e := range InfoMap {
+			e.Locked = update
+			InfoMap[key] = e
+			if key == ID {
+				infoElev.Locked = update
+			}
+
 		}
 	}
-	//ch_fromSync <- infoMap
 }
 
 // hjelpefunksjon for CompareAndUpdateWV
@@ -338,28 +325,6 @@ func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
 	return 0 //default
 }
 
-// func allSynced(wvMap map[string]nettverk.WorldView) bool {
-// 	var firstElev nettverk.InformationElev
-// 	isFirst := true
-
-// 	for _, elev := range wvMap {
-// 		if isFirst {
-// 			firstElev.HallRequests = elev.HallRequests
-// 			isFirst = false
-// 		} else {
-// 			for i := 0; i < len(m); i++ {
-// 				firstPair := firstElev.HallRequests[i]
-// 				for _, s := range elev.HallRequests[1:] {
-// 					if s != firstPair {
-// 						return false
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return true
-// }
-
 func AllWorldViewsEqual(worldViewMap map[string]WorldView) bool {
 	WVMapMutex.Lock() // Lås mutex før lesing fra InfoMap
 	defer WVMapMutex.Unlock()
@@ -381,45 +346,12 @@ func AllWorldViewsEqual(worldViewMap map[string]WorldView) bool {
 
 	// OBS: denne kan få koden til å kræsje men nødvendig for å sjekke om alle peers har låst infoen sin for synking
 	wv := worldViewMap[ID]
-	for _, elev := range wv.InfoMap {
+	for id, elev := range wv.InfoMap {
 		if elev.Locked != 2 {
-			//fmt.Printf("Elevator with ID %s is not locked (Locked=%d)\n", id, elev.Locked)
+			fmt.Printf("Elevator with ID %s is not locked (Locked=%d)\n", id, elev.Locked)
 			return false
 		}
 	}
 
 	return true
-}
-
-// returnerer true hvis alle heiser holder samme liste med hallrequests
-// må endre så den også sammenlikner andre egenskaper, og sjekker om alle er låst
-// func allSynced(m map[string]nettverk.InformationElev) bool {
-// 	var firstElev nettverk.InformationElev
-// 	isFirst := true
-
-// 	for _, elev := range m {
-// 		if isFirst {
-// 			firstElev.HallRequests = elev.HallRequests
-// 			isFirst = false
-// 		} else {
-// 			for i := 0; i < len(m); i++ {
-// 				firstPair := firstElev.HallRequests[i]
-// 				for _, s := range elev.HallRequests[1:] {
-// 					if s != firstPair {
-// 						return false
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return true
-// }
-
-func PrintTest() {
-	k := 0
-	for {
-		println("N: ", k)
-		k++
-		time.Sleep(1000 * time.Millisecond)
-	}
 }
