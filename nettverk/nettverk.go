@@ -54,7 +54,7 @@ func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 		if HRArequest {
 			info.ReadyForHRA = 1
 		}
-		time.Sleep(30 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 
 		//fmt.Printf("InfoMap: ")
 
@@ -115,8 +115,7 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 					HRArequest = true // burde egt hente status fra egen heis før denne settes true
 				}
 			}
-			// case a := <-ch_fromSync:
-			// 	InfoMap = a
+
 		}
 	}
 }

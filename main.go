@@ -76,4 +76,13 @@ Fy det er så mye som må fikses... :(
 Iblant så blir noen heiser stuck i DoorOpen, aner ikke hvrofor, og noen ganger tar flere heiser samme ordre utenom at jeg vet helt hvorfor :(
 Vi må også fikse at om en heis går offline så må den fjernes fra mappet, ellers vil vi kunne ende opp med at de andre heisene tror at en offline heis tar ordren.
 Og noen heiser bare disconnecter iblant med tidenes lengst feilmelding. Dette er fordi noen skriver til mappet samtidig som det itereres over :(
+Noen ordre blir også bare hoppet over. eksempelvis hvis heisen starter i 2 og skal ned til 1 for så opp til 3 og 4, så går den rett til 4 etter 2 og skipper 3, men requesten på 3 blir borte
+Ofteskjer det også at heisen kommer til en etasje, men ikke fjerner ordren, den tar ordren på nytt igjen etterå. Tror kanskje dette problemet også kan komme av at det blir skrevet at det er en ordre samtidig som den fjernes kan føre til dette
+
+Når skrives og itereres det over Infomap?
+
+- i funksjonen PrintInfoMap
+- nettverk linje 111 etter å ha motatt heartbeat
+- nettverk linje 105 delete
+- masse i HRA
 */

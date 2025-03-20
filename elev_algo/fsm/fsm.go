@@ -86,7 +86,7 @@ func Fsm_OrderInList(btnFloor int, btnType int) {
 }
 
 func Fsm_onFloorArrival(newFloor int) {
-	//fmt.Printf("\n\nFloorArrival(%d)\n", newFloor)
+	fmt.Printf("\n\nFloorArrival(%d)\n", newFloor)
 
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)
@@ -269,6 +269,7 @@ func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 
 func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) {
 	//fmt.Println("from infomap: ", hallRequests)
+
 	for i := 0; i < len(hallRequests); i++ {
 		elevator.Requests[i][0] = hallRequests[i][0]
 		elevator.Requests[i][1] = hallRequests[i][1]

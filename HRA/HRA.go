@@ -25,7 +25,7 @@ func HRAMain(HRAOut chan map[string][][2]bool, ch_syncRequestsSingleElev chan []
 
 	for {
 
-		time.Sleep(30 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 
 		ch_toSync <- nettverk.InfoMap //sender infomap til synking
 
