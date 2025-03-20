@@ -84,15 +84,21 @@ func BroadcastElevatorStatus(ch_HRAInputTx chan InformationElev) {
 }
 
 func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
-	b.Receiver(14000, ch_HRAInputRx)
+	for {
+		b.Receiver(14000, ch_HRAInputRx)
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func BroadcastWV(ch_WVTx chan WorldView) {
-	b.Transmitter(15000, ch_WVTx)
+	b.Transmitter(14001, ch_WVTx)
 }
 
 func RecieveWV(ch_WVRx chan WorldView) {
-	b.Receiver(15000, ch_WVRx)
+	for {
+		b.Receiver(14001, ch_WVRx)
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, ch_shouldSync chan bool, ch_fromSync chan map[string]InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, id string) {
@@ -154,6 +160,7 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, 
 				WorldViewMap[wv.Id] = wv
 			}
 		}
+		time.Sleep(100 * time.Millisecond)
 
 	}
 }
@@ -229,6 +236,7 @@ func FromHRA(HRAOut chan map[string][][2]bool, ch_elevator_queue chan [][2]bool)
 				ch_elevator_queue <- v
 			}
 		}
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
 
@@ -245,6 +253,7 @@ func Sync(ch_shouldSync chan bool) {
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
+	fmt.Println("sync done")
 }
 
 func CompareAndUpdateInfoMap() {
@@ -341,7 +350,6 @@ func AllWorldViewsEqual(worldViewMap map[string]WorldView) bool {
 		}
 	}
 
-	
 	// OBS: denne får koden til å kræsje men nødvendig for å sjekke om alle peers har låst infoen sin for synking
 	// wv := worldViewMap[ID]
 	// for id, elev := range wv.InfoMap {
@@ -379,11 +387,10 @@ func AllWorldViewsEqual(worldViewMap map[string]WorldView) bool {
 // }
 
 func PrintTest() {
+	k := 0
 	for {
-		fmt.Println("InfoMap: ")
-		for k, v := range InfoMap {
-			fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
-		}
-		time.Sleep(5000 * time.Millisecond)
+		println("N: ", k)
+		k++
+		time.Sleep(1000 * time.Millisecond)
 	}
 }

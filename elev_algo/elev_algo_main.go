@@ -1,6 +1,8 @@
 package elev_algo
 
 import (
+	"time"
+
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -68,6 +70,7 @@ func Elev_main(ch SingleElevatorChans,ch_syncRequestsSingleElev chan [][2]elev.C
 			fsm.UpdateHallrequests(hallRequest)
 		
 		}
+		time.Sleep(100 * time.Millisecond)
 
 	}
 }
