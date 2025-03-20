@@ -4,7 +4,9 @@ import (
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
+
 	//"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"fmt"
 )
 
 type SingleElevatorChans struct {
@@ -37,6 +39,7 @@ func Elev_main(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.
 		select {
 		case a := <-ch.Drv_buttons:
 			fsm.Fsm_onRequestButtonPress(a.Floor, int(a.Button))
+			fmt.Printf("Button pressed: %6v :  %+v\n", a.Floor, a.Button)
 
 		case a := <-ch.Drv_floors:
 			fsm.Fsm_onFloorArrival(a)

@@ -51,7 +51,7 @@ func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
 
 func Fsm_OrderInList(btnFloor int, btnType int) {
 	elevator.OwnRequests[btnFloor][btnType] = true
-
+	//fmt.Printf("elevator_state: %6v", elevator.State)
 	switch elevator.State {
 	case elev.DOOROPEN:
 		if requests_shouldClearImmediately(elevator, btnFloor, btnType) {
@@ -90,7 +90,7 @@ func Fsm_onFloorArrival(newFloor int) {
 
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)
-
+	//fmt.Printf("elevator_state: %6v", elevator.State)
 	if elevator.State == elev.MOVE && requests_shouldStop(elevator) {
 		outputDevice.MotorDirection(elev.MD_Stop)
 		outputDevice.DoorLight(true)
@@ -102,6 +102,7 @@ func Fsm_onFloorArrival(newFloor int) {
 }
 
 func Fsm_onDoorTimeout() {
+	//fmt.Printf("elevator_state: %6v", elevator.State)
 	if elevator.State == elev.DOOROPEN {
 		dirn, behaviour := requests_chooseDirection(elevator)
 		elevator.Dirn = dirn

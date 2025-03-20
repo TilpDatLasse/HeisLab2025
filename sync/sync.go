@@ -65,7 +65,7 @@ func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
 	}
 	switch {
 	case isPresent[0] && isPresent[1] && isPresent[2]:
-		panic("Confirmationstates 0,1,2 at the same time :(")
+		panic("Confirmationstates 0,1,2 at the same time :(") // denne linjen går ikke med tre heiser om man trykker på knappen som akkurat er i overgang fra 2 til 0 etter å ha blitt tatt. Da får man 0,1 og 2
 	case !isPresent[0]: // alle har 1 eller 2
 		//fmt.Println("Order registrerd on all peers, Confirmed!")
 		return 2

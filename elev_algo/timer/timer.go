@@ -2,6 +2,7 @@ package timer
 
 import (
 	"time"
+
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 )
 

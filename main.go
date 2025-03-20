@@ -48,6 +48,7 @@ func main() {
 	go nettverk.BroadcastElevatorStatus(ch_HRAInputTx)
 	go nettverk.FromHRA(ch_HRAOut, SingElevChans.Single_elev_queue)
 	go sync.CompareAndUpdateWV(ch_toSync, ch_fromSync)
+	go nettverk.PrintMap()
 
 	select {}
 
@@ -67,4 +68,12 @@ Vet at må løses fra 18. mars:
 Heisen kræsjer hvis updateHallrequest fra fsm.go kjører og iterer over mappet mens nettverkmodulen ender mappet
 Lysene fungerer ikke helt
 virker som ordene funker bra så lenge timingen er riktig. Kan en løsning være å kjøre visse funksjoner etter hverandre og ikke i parallell?
+*/
+
+/*
+Fy det er så mye som må fikses... :(
+
+Iblant så blir noen heiser stuck i DoorOpen, aner ikke hvrofor, og noen ganger tar flere heiser samme ordre utenom at jeg vet helt hvorfor :(
+Vi må også fikse at om en heis går offline så må den fjernes fra mappet, ellers vil vi kunne ende opp med at de andre heisene tror at en offline heis tar ordren.
+Og noen heiser bare disconnecter iblant med tidenes lengst feilmelding. Dette er fordi noen skriver til mappet samtidig som det itereres over :(
 */

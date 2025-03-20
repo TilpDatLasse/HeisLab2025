@@ -2,13 +2,12 @@ package nettverk
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
+
 	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
 )
 
@@ -48,24 +47,17 @@ type HRAInput struct {
 // henter status fra heisen og sender på channel som en informationElev-variabel
 func SetElevatorStatus(ch_HRAInputTx chan InformationElev) {
 	for {
-		for HRArequest {
-			// ingenting
-			time.Sleep(10 * time.Millisecond)
-		}
+
 		info := Converter(fsm.FetchElevatorStatus())
 		info.ID = ID
 		ch_HRAInputTx <- info
 		if HRArequest {
 			info.ReadyForHRA = 1
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(30 * time.Millisecond)
 
-		/*
-			fmt.Printf("InfoMap: ")
-			for k, v := range InfoMap {
-				fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
-			}
-		*/
+		//fmt.Printf("InfoMap: ")
+
 	}
 }
 
@@ -83,15 +75,15 @@ func RecieveElevatorStatus(ch_HRAInputRx chan InformationElev) {
 }
 
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
-
-	if id == "" {
-		localIP, err := localip.LocalIP()
-		if err != nil {
-			fmt.Println(err)
-			localIP = "DISCONNECTED"
-		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
-	}
+	/*
+		if id == "" {
+			localIP, err := localip.LocalIP()
+			if err != nil {
+				fmt.Println(err)
+				localIP = "DISCONNECTED"
+			}
+			id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+		}*/
 	ID = id
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
@@ -106,11 +98,19 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, id string) {
 			fmt.Printf("  Peers:    %q\n", p.Peers)
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
+			if len(p.Lost) != 0 {
+				for i := 0; i < len(p.Lost); i++ {
+					lostpeer := p.Lost[i]
+					delete(InfoMap, lostpeer)
+				}
+			}
 
 		case a := <-ch_HRAInputRx: //heartbeat med info mottatt
 			if a.ID != "" {
 				InfoMap[a.ID] = a
-
+				/*for k, v := range InfoMap {
+					fmt.Printf("%6v :  %+v\n", k, v)
+				}*/
 				if a.ReadyForHRA != 0 { //hvis mottar at noen vil synke
 					HRArequest = true // burde egt hente status fra egen heis før denne settes true
 				}
@@ -193,4 +193,14 @@ func cabToBool(list []elev.ConfirmationState) []bool {
 	}
 
 	return boolList
+}
+
+func PrintMap() {
+	for {
+		for k, v := range InfoMap {
+			fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
+		}
+		fmt.Println("----------------------------------")
+		time.Sleep(2000 * time.Millisecond)
+	}
 }
