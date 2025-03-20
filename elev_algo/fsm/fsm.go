@@ -23,7 +23,7 @@ func Fsm_init() {
 	elevator.Obs = false
 }
 
-func setAllLights(e elev.Elevator) {
+func setAllLights(e elev.Elevator) { //trenger egt ikke ta inn elevator her, er global
 	for floor := 0; floor < elev.N_FLOORS; floor++ {
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
 			outputDevice.RequestButtonLight(elev.ButtonType(btn), floor, e.Requests[floor][btn])
@@ -263,9 +263,35 @@ func requests_clearAtCurrentFloor(e elev.Elevator) elev.Elevator {
 	return e
 }
 
-func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) {
-	for i := 0; i < len(hallRequests); i++ {
-		elevator.Requests[i][0] = hallRequests[i][0]
-		elevator.Requests[i][1] = hallRequests[i][1]
+func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her må vi ha cyclicupdate
+	for i := 0; i < len(hallRequests); i++ { //itererer over etasjer
+		for j := 0; j < 2; j++ { //itererer over buttons/retninger
+			list := make([]elev.ConfirmationState, 2)
+			list[0] = hallRequests[i][j]
+			list[1] = elevator.Requests[i][j]
+			//fmt.Println("LISTE: ", list)
+			elevator.Requests[i][j] = cyclicUpdate(list)
+		}
 	}
+	setAllLights(elevator)
+}
+
+// burde egt definere denne i egen modul så den kan brukes av flere
+func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
+	isPresent := map[elev.ConfirmationState]bool{} // map som lagrer om hver confimationstate(0,1,2) er tilstede
+	for _, v := range list {
+		isPresent[v] = true
+	}
+	switch {
+	case isPresent[0] && isPresent[1] && isPresent[2]:
+		panic("Confirmationstates 0,1,2 at the same time :(")
+	case !isPresent[0]: // alle har 1 eller 2
+		//fmt.Println("Order registrerd on all peers, Confirmed!")
+		return 2
+	case isPresent[2] && isPresent[0]: // alle har 0 eller 2 (noen har utført ordren)
+		return 0
+	case isPresent[0] && isPresent[1]: // alle har 0 eller 1 (noen har fått en ny ordre)
+		return 1
+	}
+	return 0 //default
 }

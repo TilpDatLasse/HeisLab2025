@@ -6,7 +6,6 @@ import (
 	"net"
 	"reflect"
 	"sync"
-	"time"
 
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/conn"
 )
@@ -18,7 +17,7 @@ const bufSize = 1024
 var mutex = &sync.Mutex{}
 
 func Transmitter(port int, chans ...interface{}) {
-	
+
 	checkArgs(chans...)
 	typeNames := make([]string, len(chans))
 	selectCases := make([]reflect.SelectCase, len(typeNames))
@@ -33,14 +32,13 @@ func Transmitter(port int, chans ...interface{}) {
 	conn := conn.DialBroadcastUDP(port)
 	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
 	for {
-		
+
 		chosen, value, _ := reflect.Select(selectCases)
 		jsonstr, _ := json.Marshal(value.Interface())
 		ttj, _ := json.Marshal(typeTaggedJSON{
 			TypeId: typeNames[chosen],
 			JSON:   jsonstr,
 		})
-		fmt.Println("Transmitter", string(ttj))
 		if len(ttj) > bufSize {
 			panic(fmt.Sprintf(
 				"Tried to send a message longer than the buffer size (length: %d, buffer size: %d)\n\t'%s'\n"+
@@ -48,8 +46,6 @@ func Transmitter(port int, chans ...interface{}) {
 				len(ttj), bufSize, string(ttj)))
 		}
 		conn.WriteTo(ttj, addr)
-		time.Sleep(3000 * time.Millisecond)
-
 	}
 }
 
@@ -83,9 +79,6 @@ func Receiver(port int, chans ...interface{}) {
 			Chan: reflect.ValueOf(ch),
 			Send: reflect.Indirect(v),
 		}})
-		fmt.Println("reciever", ttj)
-		time.Sleep(3000 * time.Millisecond)
-
 	}
 }
 

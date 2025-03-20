@@ -44,7 +44,7 @@ func main() {
 	ch_syncRequestsSingleElev := make(chan [][2]elev.ConfirmationState)
 
 	go elev_algo.Elev_main(SingElevChans, ch_syncRequestsSingleElev, simPort)
-	go nettverk.Nettverk_hoved(ch_HRAInputRx, ch_WVRx, ch_shouldSync, ch_fromSync,ch_syncRequestsSingleElev, id)
+	go nettverk.Nettverk_hoved(ch_HRAInputRx, ch_WVRx, ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev, id)
 	//go sync.Sync()
 
 	go HRA.HRAMain(ch_HRAOut, ch_shouldSync, ch_fromSync)
@@ -67,3 +67,8 @@ func main() {
 //cyclic-counter er viktig, kan implementeres i den opprinnelige hallrequest-listen
 //Worldview er veldig viktig og burde nok være egen modul
 //channels som bare går inn i kun én funksjon er sannsynligvis overflødige.
+
+//må huske å endre så hra sycer når det skjer noe, ikke bare regelmessig
+//burde kalle sync-modulen noe annet, mutex-modulen heter også sync
+
+//virker egt som om lys funker som de skal nå

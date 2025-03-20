@@ -1,8 +1,6 @@
 package elev_algo
 
 import (
-	"time"
-
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -18,7 +16,7 @@ type SingleElevatorChans struct {
 	Single_elev_queue chan [][2]bool
 }
 
-func Elev_main(ch SingleElevatorChans,ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, simPort string) {
+func Elev_main(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, simPort string) {
 	elev.Init("localhost:"+simPort, elev.N_FLOORS) //burde bruke flag her for å teste med flere
 
 	fsm.Fsm_init()
@@ -68,9 +66,6 @@ func Elev_main(ch SingleElevatorChans,ch_syncRequestsSingleElev chan [][2]elev.C
 			}
 		case hallRequest := <-ch_syncRequestsSingleElev:
 			fsm.UpdateHallrequests(hallRequest)
-		
 		}
-		time.Sleep(100 * time.Millisecond)
-
 	}
 }
