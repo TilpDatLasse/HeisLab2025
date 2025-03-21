@@ -111,6 +111,13 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, 
 			fmt.Printf("  Peers:    %q\n", p.Peers)
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
+			if len(p.Lost) != 0 {
+				for i := 0; i < len(p.Lost); i++ {
+					lostpeer := p.Lost[i]
+					delete(InfoMap, lostpeer)
+					delete(WorldViewMap, lostpeer)
+				}
+			}
 
 		case syncRequest := <-ch_shouldSync:
 
