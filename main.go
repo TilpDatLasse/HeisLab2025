@@ -15,12 +15,16 @@ func main() {
 	fmt.Println("Starting, please wait...")
 
 	var (
-		id      string
-		simPort string
+		id        string
+		simPort   string
+		udpWVPort int
+		peersPort int
 	)
 
 	flag.StringVar(&id, "id", "one", "id of this peer")
 	flag.StringVar(&simPort, "simPort", "15657", "simulation server port")
+	flag.IntVar(&udpWVPort, "udpVWPort", 14700, "sudp worldviews port")
+	flag.IntVar(&peersPort, "peerPort", 16500, "onlie peers port")
 	flag.Parse()
 
 	SingElevChans := elev_algo.SingleElevatorChans{
@@ -44,13 +48,13 @@ func main() {
 	ch_syncRequestsSingleElev := make(chan [][2]elev.ConfirmationState)
 
 	go elev_algo.Elev_main(SingElevChans, ch_syncRequestsSingleElev, simPort)
-	go nettverk.Nettverk_hoved(ch_HRAInputRx, ch_WVRx, ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev, id)
+	go nettverk.Nettverk_hoved(ch_HRAInputRx, ch_WVRx, ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev, id, peersPort)
 	//go sync.Sync()
 
 	go HRA.HRAMain(ch_HRAOut, ch_shouldSync, ch_fromSync)
 	go nettverk.SetElevatorStatus(ch_HRAInputTx, ch_WVTx)
-	go nettverk.RecieveWV(ch_WVRx)
-	go nettverk.BroadcastWV(ch_WVTx)
+	go nettverk.RecieveWV(ch_WVRx, udpWVPort)
+	go nettverk.BroadcastWV(ch_WVTx, udpWVPort)
 	go nettverk.FromHRA(ch_HRAOut, SingElevChans.Single_elev_queue)
 
 	select {}
