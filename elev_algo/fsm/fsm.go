@@ -38,11 +38,11 @@ func Fsm_onInitBetweenFloors() {
 }
 
 func Fsm_onRequestButtonPress(btnFloor int, btnType int) {
-	elevator.Requests[btnFloor][btnType] = 1
-
 	if btnType == 2 { //er cab-request
+		elevator.Requests[btnFloor][btnType] = 2
 		Fsm_OrderInList(btnFloor, btnType)
 	} else {
+		elevator.Requests[btnFloor][btnType] = 1
 		setAllLights(elevator)
 	}
 }
