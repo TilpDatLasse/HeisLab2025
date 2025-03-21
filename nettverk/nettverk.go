@@ -2,7 +2,6 @@ package nettverk
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -10,7 +9,6 @@ import (
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/localip"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
 )
 
@@ -79,32 +77,32 @@ func SetElevatorStatus(ch_HRAInputTx chan InformationElev, ch_WVTx chan WorldVie
 	}
 }
 
-func BroadcastWV(ch_WVTx chan WorldView) {
-	b.Transmitter(14700, ch_WVTx)
+func BroadcastWV(ch_WVTx chan WorldView, udpWVPort int) {
+	b.Transmitter(udpWVPort, ch_WVTx)
 }
 
-func RecieveWV(ch_WVRx chan WorldView) {
-	b.Receiver(14700, ch_WVRx)
+func RecieveWV(ch_WVRx chan WorldView, udpWVPort int) {
+	b.Receiver(udpWVPort, ch_WVRx)
 }
 
-func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, ch_shouldSync chan bool, ch_fromSync chan map[string]InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, id string) {
-
-	if id == "" {
-		localIP, err := localip.LocalIP()
-		if err != nil {
-			fmt.Println(err)
-			localIP = "DISCONNECTED"
-		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
-	}
+func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, ch_shouldSync chan bool, ch_fromSync chan map[string]InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, id string, peerPort int) {
+	/*
+		if id == "" {
+			localIP, err := localip.LocalIP()
+			if err != nil {
+				fmt.Println(err)
+				localIP = "DISCONNECTED"
+			}
+			id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+		}*/
 	ID = id
 	infoElev.ElevID = ID
 	myWorldView.Id = ID
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(16500, id, peerTxEnable)
-	go peers.Receiver(16500, peerUpdateCh)
+	go peers.Transmitter(peerPort, id, peerTxEnable)
+	go peers.Receiver(peerPort, peerUpdateCh)
 
 	for {
 		select {
