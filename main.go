@@ -38,7 +38,6 @@ func main() {
 		Single_elev_queue: make(chan [][2]bool),
 	}
 
-
 	//ch_toSync := make(chan map[string]nettverk.InformationElev)   //sender infomap
 	ch_fromSync := make(chan map[string]worldview.InformationElev) //sender infomap
 	ch_shouldSync := make(chan bool)

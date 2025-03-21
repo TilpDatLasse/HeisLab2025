@@ -7,8 +7,6 @@ import (
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
-	"github.com/TilpDatLasse/HeisLab2025/syncing"
-	//"github.com/TilpDatLasse/HeisLab2025/syncing"
 )
 
 var ID string
@@ -55,7 +53,7 @@ func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	myWorldView.Id = ID
 	InfoElev.ElevID = ID
 
-	for{
+	for {
 		wv := <-ch_WVRx //worldview mottatt (dette skjer bare når vi holder på å synke)
 
 		if wv.Id != "" {
@@ -78,10 +76,9 @@ func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 			ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests //må nok bruke mutex her, for å sikre at ikke noen sender noe før vi har fått endret sigle elevs hallrequests
 			time.Sleep(100 * time.Millisecond)
 			InfoMapMutex.Unlock()
-	
+
 			if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
-				ShouldSync = true
-				go syncing.Sync(ch_shouldSync)
+				ch_shouldSync <- true
 			}
 		}
 	}

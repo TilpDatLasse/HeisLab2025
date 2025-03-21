@@ -9,26 +9,29 @@ import (
 )
 
 func Syncing(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev) {
-	syncRequest := <-ch_shouldSync
-	if syncRequest {
-		fmt.Println("Recieved sync request")
-		worldview.ShouldSync = true
-		go Sync(ch_shouldSync)
-	} else { //syncRequest == false, synk ferdig
-		fmt.Println("Sync done!!")
-		worldview.InfoMapMutex.Lock() // Lås mutex før lesing fra InfoMap
-		select {
-		case ch_fromSync <- worldview.InfoMap:
-		default:
-			fmt.Println("Advarsel: Mistet en infomapmelding (kanal full)")
+	for {
+		syncRequest := <-ch_shouldSync
+		if syncRequest {
+			fmt.Println("Recieved sync request")
+			worldview.ShouldSync = true
+			go Sync(ch_shouldSync)
+		} else { //syncRequest == false, synk ferdig
+			fmt.Println("Sync done!!")
+			worldview.InfoMapMutex.Lock() // Lås mutex før lesing fra InfoMap
+			select {
+			case ch_fromSync <- worldview.InfoMap:
+			default:
+				fmt.Println("Advarsel: Mistet en infomapmelding (kanal full)")
+			}
+			worldview.InfoMapMutex.Unlock() // Lås opp mutex etter lesing
+
+			worldview.ShouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp
+			worldview.InfoElev.Locked = 0
+			fmt.Println("Locked: ", worldview.InfoElev.Locked)
+
 		}
-		worldview.InfoMapMutex.Unlock() // Lås opp mutex etter lesing
-
-		worldview.ShouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp
-		worldview.InfoElev.Locked = 0
-		fmt.Println("Locked: ", worldview.InfoElev.Locked)
-
 	}
+
 }
 
 func Sync(ch_shouldSync chan bool) {
