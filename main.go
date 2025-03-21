@@ -79,3 +79,4 @@ func main() {
 // Rydde bort unnødvendig quick-fixes
 // Robusthet mtp packetloss
 // Locked-variabelen er nok ikke helt robust (?)
+// sjekke hva som egt skjer når den får to ordre i samme etasje (opp og ned), virker ikke som den venter 3 sek

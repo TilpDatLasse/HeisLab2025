@@ -24,20 +24,17 @@ func Nettverk_hoved(ch_WVRx chan worldview.WorldView, id string, peerPort int) {
 	go peers.Receiver(peerPort, peerUpdateCh)
 
 	for {
-		select {
-		case p := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
-			if len(p.Lost) != 0 {
-				for i := 0; i < len(p.Lost); i++ {
-					lostpeer := p.Lost[i]
-					delete(InfoMap, lostpeer)
-					delete(WorldViewMap, lostpeer)
-				}
+		p := <-peerUpdateCh
+		fmt.Printf("Peer update:\n")
+		fmt.Printf("  Peers:    %q\n", p.Peers)
+		fmt.Printf("  New:      %q\n", p.New)
+		fmt.Printf("  Lost:     %q\n", p.Lost)
+		if len(p.Lost) != 0 {
+			for i := 0; i < len(p.Lost); i++ {
+				lostpeer := p.Lost[i]
+				delete(worldview.InfoMap, lostpeer)
+				delete(worldview.WorldViewMap, lostpeer)
 			}
-
 		}
 	}
 }
