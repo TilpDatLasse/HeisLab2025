@@ -80,11 +80,11 @@ func SetElevatorStatus(ch_HRAInputTx chan InformationElev, ch_WVTx chan WorldVie
 }
 
 func BroadcastWV(ch_WVTx chan WorldView) {
-	b.Transmitter(14500, ch_WVTx)
+	b.Transmitter(14700, ch_WVTx)
 }
 
 func RecieveWV(ch_WVRx chan WorldView) {
-	b.Receiver(14500, ch_WVRx)
+	b.Receiver(14700, ch_WVRx)
 }
 
 func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, ch_shouldSync chan bool, ch_fromSync chan map[string]InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, id string) {
@@ -103,8 +103,8 @@ func Nettverk_hoved(ch_HRAInputRx chan InformationElev, ch_WVRx chan WorldView, 
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(16000, id, peerTxEnable)
-	go peers.Receiver(16000, peerUpdateCh)
+	go peers.Transmitter(16500, id, peerTxEnable)
+	go peers.Receiver(16500, peerUpdateCh)
 
 	for {
 		select {
