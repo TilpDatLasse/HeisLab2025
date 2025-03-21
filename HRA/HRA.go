@@ -8,7 +8,7 @@ import (
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
 // type HRAElevState struct {
@@ -23,7 +23,7 @@ import (
 // 	States       map[string]HRAElevState `json:"states"`
 // }
 
-func HRAMain(HRAOut chan map[string][][2]bool, ch_shouldSync chan bool, ch_fromSync chan map[string]nettverk.InformationElev) {
+func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ID string) {
 
 	hraExecutable := ""
 	switch runtime.GOOS {
@@ -36,7 +36,7 @@ func HRAMain(HRAOut chan map[string][][2]bool, ch_shouldSync chan bool, ch_fromS
 	}
 
 	for {
-		
+
 		// fmt.Printf("InfoMap: ")
 		// for k, v := range nettverk.InfoMap {
 		// 	fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
@@ -44,15 +44,12 @@ func HRAMain(HRAOut chan map[string][][2]bool, ch_shouldSync chan bool, ch_fromS
 
 		time.Sleep(4000 * time.Millisecond)
 
-		
-		ch_shouldSync <- true  //forespørsel om synking
+		ch_shouldSync <- true //forespørsel om synking
 
-		infoMap := <- ch_fromSync  //venter på at synking er ferdig
+		infoMap := <-ch_fromSync //venter på at synking er ferdig
 
-		
-
-		var input nettverk.HRAInput
-		input.States = make(map[string]nettverk.HRAElevState)
+		var input worldview.HRAInput
+		input.States = make(map[string]worldview.HRAElevState)
 
 		for key := range infoMap {
 			elevstate := infoMap[key].State
@@ -80,13 +77,26 @@ func HRAMain(HRAOut chan map[string][][2]bool, ch_shouldSync chan bool, ch_fromS
 				fmt.Println("json.Unmarshal error: ", err)
 				return
 			}
-			HRAOut <- *output //send HRA-output videre
+
+			sendToElev(*output, ch_elevatorQueue, ID) //sener output til elev
+
 			fmt.Printf("output: \n")
 			for k, v := range *output {
 				fmt.Printf("%6v :  %+v\n", k, v)
 			}
 		}
 	}
+}
+
+// Henter output fra HRA og sender videre til elev-modulen
+func sendToElev(output map[string][][2]bool, ch_elevatorQueue chan [][2]bool, ID string) {
+
+	for k, v := range output {
+		if k == ID {
+			ch_elevatorQueue <- v
+		}
+	}
+
 }
 
 func hallToBool(hallReqList [][2]elev.ConfirmationState) [][2]bool {

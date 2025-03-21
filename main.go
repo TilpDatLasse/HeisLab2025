@@ -9,6 +9,8 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo"
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"github.com/TilpDatLasse/HeisLab2025/syncing"
+	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
 func main() {
@@ -36,26 +38,25 @@ func main() {
 		Single_elev_queue: make(chan [][2]bool),
 	}
 
-	ch_HRAOut := make(chan map[string][][2]bool)
-	ch_HRAInputTx := make(chan nettverk.InformationElev)
-	ch_HRAInputRx := make(chan nettverk.InformationElev)
+
 	//ch_toSync := make(chan map[string]nettverk.InformationElev)   //sender infomap
-	ch_fromSync := make(chan map[string]nettverk.InformationElev) //sender infomap
+	ch_fromSync := make(chan map[string]worldview.InformationElev) //sender infomap
 	ch_shouldSync := make(chan bool)
 	//ch_allSynced := make(chan bool)
-	ch_WVRx := make(chan nettverk.WorldView)
-	ch_WVTx := make(chan nettverk.WorldView)
+	ch_WVRx := make(chan worldview.WorldView)
+	ch_WVTx := make(chan worldview.WorldView)
 	ch_syncRequestsSingleElev := make(chan [][2]elev.ConfirmationState)
 
 	go elev_algo.Elev_main(SingElevChans, ch_syncRequestsSingleElev, simPort)
-	go nettverk.Nettverk_hoved(ch_HRAInputRx, ch_WVRx, ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev, id, peersPort)
+	go nettverk.Nettverk_hoved(ch_WVRx, id, peersPort)
 	//go sync.Sync()
 
-	go HRA.HRAMain(ch_HRAOut, ch_shouldSync, ch_fromSync)
-	go nettverk.SetElevatorStatus(ch_HRAInputTx, ch_WVTx)
+	go HRA.HRAMain(SingElevChans.Single_elev_queue, ch_shouldSync, ch_fromSync, id)
+	go worldview.SetElevatorStatus(ch_WVTx)
 	go nettverk.RecieveWV(ch_WVRx, udpWVPort)
 	go nettverk.BroadcastWV(ch_WVTx, udpWVPort)
-	go nettverk.FromHRA(ch_HRAOut, SingElevChans.Single_elev_queue)
+	go worldview.WorldViewFunc(ch_WVRx, ch_syncRequestsSingleElev, ch_shouldSync, id)
+	go syncing.Syncing(ch_shouldSync, ch_fromSync)
 
 	select {}
 
@@ -76,5 +77,6 @@ func main() {
 //TODO:
 // Sende på channel fra elevalgo til hra når noe skjer, så hra kan sende syncrequest (husk å bruke select når vi skriver til channel)
 // Dele opp i flere moduler (syncing, WorldView, etc.)
-// Rydde bort unnødvendig quick-fixes 
+// Rydde bort unnødvendig quick-fixes
 // Robusthet mtp packetloss
+// Locked-variabelen er nok ikke helt robust (?)
