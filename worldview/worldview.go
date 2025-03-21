@@ -14,7 +14,7 @@ var InfoMap = make(map[string]InformationElev)
 var InfoMapMutex sync.Mutex
 var WVMapMutex sync.Mutex
 
-var myWorldView = WorldView{
+var MyWorldView = WorldView{
 	InfoMap: make(map[string]InformationElev), // Initialiserer mappet
 }
 
@@ -50,7 +50,7 @@ type HRAInput struct {
 
 func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_shouldSync chan bool, id string) {
 	ID = id
-	myWorldView.Id = ID
+	MyWorldView.Id = ID
 	InfoElev.ElevID = ID
 
 	for {
@@ -60,22 +60,22 @@ func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 			WVMapMutex.Lock()
 			WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
 			WVMapMutex.Unlock()
-			if wv.Id != ID {
+			if wv.Id != ID { //noen andre sendte
 				InfoMapMutex.Lock()
 				InfoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
 				InfoMapMutex.Unlock()
-				CompareAndUpdateInfoMap()
-			} else { //det var vi som sendte, vi kan nå oppdatere vår egen info
-				InfoMapMutex.Lock()
-				//InfoMap = wv.InfoMap
-				InfoMapMutex.Unlock()
-				CompareAndUpdateInfoMap()
-				myWorldView.InfoMap = InfoMap
+				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
+			} else {
+				// InfoMapMutex.Lock()
+				// //InfoMap = wv.InfoMap
+				// InfoMapMutex.Unlock()
+				// CompareAndUpdateInfoMap()
+				// myWorldView.InfoMap = InfoMap
 			}
-			InfoMapMutex.Lock()
-			ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests //må nok bruke mutex her, for å sikre at ikke noen sender noe før vi har fått endret sigle elevs hallrequests
-			time.Sleep(100 * time.Millisecond)
-			InfoMapMutex.Unlock()
+			// InfoMapMutex.Lock()
+			// //ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests //må nok bruke mutex her, for å sikre at ikke noen sender noe før vi har fått endret sigle elevs hallrequests
+			// time.Sleep(10 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 
 			if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
 				ch_shouldSync <- true
@@ -85,9 +85,8 @@ func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 
 }
 
-func CompareAndUpdateInfoMap() {
+func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	InfoMapMutex.Lock() // Lås mutex før lesing og skriving til InfoMap
-	defer InfoMapMutex.Unlock()
 	//fmt.Println("INFO MAP: ", InfoMap)
 	if len(InfoMap) != 0 {
 		//denne delen sammenlikner hallrequests og oppdaterer de
@@ -129,6 +128,11 @@ func CompareAndUpdateInfoMap() {
 
 		}
 	}
+	select {
+	case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
+	default:
+	}
+	InfoMapMutex.Unlock()
 }
 
 // henter status fra heisen og sender på channel som en informationElev-variabel
@@ -138,21 +142,32 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 			InfoElev = Converter(fsm.FetchElevatorStatus())
 			if ShouldSync {
 				InfoElev.Locked = 1
-				fmt.Println("debug 1")
 			}
 		}
 		if ID != "" {
 			InfoElev.ElevID = ID
+			InfoMapMutex.Lock()
 			InfoMap[ID] = InfoElev
-			myWorldView.InfoMap = InfoMap
+			InfoMapMutex.Unlock()
+			MyWorldView.InfoMap = InfoMap
+			WVMapMutex.Lock()
+			WorldViewMap[ID] = MyWorldView
+			WVMapMutex.Unlock()
 
 			select {
-			case ch_WVTx <- myWorldView:
+			case ch_WVTx <- MyWorldView:
 			default:
 				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
 			}
-			time.Sleep(1000 * time.Millisecond)
+
 		}
+		// InfoMapMutex.Lock()
+		// select {
+		// case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
+		// default:
+		// }
+		// InfoMapMutex.Unlock()
+		time.Sleep(30 * time.Millisecond)
 
 	}
 }

@@ -29,11 +29,18 @@ func Nettverk_hoved(ch_WVRx chan worldview.WorldView, id string, peerPort int) {
 		fmt.Printf("  Peers:    %q\n", p.Peers)
 		fmt.Printf("  New:      %q\n", p.New)
 		fmt.Printf("  Lost:     %q\n", p.Lost)
-		if len(p.Lost) != 0 {
-			for i := 0; i < len(p.Lost); i++ {
-				lostpeer := p.Lost[i]
+
+		for i := 0; i < len(p.Lost); i++ {
+			lostpeer := p.Lost[i]
+			if lostpeer != id {
+				worldview.InfoMapMutex.Lock()
 				delete(worldview.InfoMap, lostpeer)
+				worldview.MyWorldView.InfoMap = worldview.InfoMap
+				worldview.InfoMapMutex.Unlock()
+				worldview.WVMapMutex.Lock()
 				delete(worldview.WorldViewMap, lostpeer)
+				worldview.WorldViewMap[id] = worldview.MyWorldView
+				worldview.WVMapMutex.Unlock()
 			}
 		}
 	}

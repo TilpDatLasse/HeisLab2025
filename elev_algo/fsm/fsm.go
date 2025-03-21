@@ -1,6 +1,8 @@
 package fsm
 
 import (
+	"fmt"
+
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
 )
@@ -56,6 +58,7 @@ func Fsm_OrderInList(btnFloor int, btnType int) {
 			elevator.OwnRequests[btnFloor][btnType] = false
 			elevator.Requests[btnFloor][btnType] = 0
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
+			fmt.Println("DEBUG 1")
 
 			Fsm_onDoorTimeout()
 		} else {
@@ -71,7 +74,7 @@ func Fsm_OrderInList(btnFloor int, btnType int) {
 		case elev.DOOROPEN:
 			outputDevice.DoorLight(true)
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
-
+			fmt.Println("DEBUG 2")
 			Fsm_onDoorTimeout()
 			elevator = requests_clearAtCurrentFloor(elevator)
 		case elev.MOVE:
@@ -270,28 +273,9 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her m�
 			list[0] = hallRequests[i][j]
 			list[1] = elevator.Requests[i][j]
 			//fmt.Println("LISTE: ", list)
-			elevator.Requests[i][j] = cyclicUpdate(list)
+			elevator.Requests[i][j] = elev.CyclicUpdate(list)
 		}
 	}
+	//fmt.Println("REQ: ", elevator.Requests)
 	setAllLights(elevator)
-}
-
-// burde egt definere denne i egen modul så den kan brukes av flere
-func cyclicUpdate(list []elev.ConfirmationState) elev.ConfirmationState {
-	isPresent := map[elev.ConfirmationState]bool{} // map som lagrer om hver confimationstate(0,1,2) er tilstede
-	for _, v := range list {
-		isPresent[v] = true
-	}
-	switch {
-	case isPresent[0] && isPresent[1] && isPresent[2]:
-		panic("Confirmationstates 0,1,2 at the same time :(")
-	case !isPresent[0]: // alle har 1 eller 2
-		//fmt.Println("Order registrerd on all peers, Confirmed!")
-		return 2
-	case isPresent[2] && isPresent[0]: // alle har 0 eller 2 (noen har utført ordren)
-		return 0
-	case isPresent[0] && isPresent[1]: // alle har 0 eller 1 (noen har fått en ny ordre)
-		return 1
-	}
-	return 0 //default
 }

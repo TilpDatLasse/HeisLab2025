@@ -55,7 +55,7 @@ func main() {
 	go nettverk.RecieveWV(ch_WVRx, udpWVPort)
 	go nettverk.BroadcastWV(ch_WVTx, udpWVPort)
 	go worldview.WorldViewFunc(ch_WVRx, ch_syncRequestsSingleElev, ch_shouldSync, id)
-	go syncing.Syncing(ch_shouldSync, ch_fromSync)
+	go syncing.Syncing(ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev)
 
 	select {}
 
@@ -80,3 +80,11 @@ func main() {
 // Robusthet mtp packetloss
 // Locked-variabelen er nok ikke helt robust (?)
 // sjekke hva som egt skjer når den får to ordre i samme etasje (opp og ned), virker ikke som den venter 3 sek
+
+//HUSKE Å SJEKKE UT HVORFOR HEISEN IKKE STOPPER I 3 SEK I ANDRE ETSASJE NÅR DEN GÅR FRA 1-2-3
+
+// The big three
+
+// - 3 sekunder problemet
+// - write og iterate problemet
+// - Lys på i millisekud så borte problemet
