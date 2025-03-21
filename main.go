@@ -69,4 +69,8 @@ func main() {
 //må huske å endre så hra sycer når det skjer noe, ikke bare regelmessig
 //burde kalle sync-modulen noe annet, mutex-modulen heter også sync
 
-//virker egt som om lys funker som de skal nå
+//TODO:
+// Sende på channel fra elevalgo til hra når noe skjer, så hra kan sende syncrequest (husk å bruke select når vi skriver til channel)
+// Dele opp i flere moduler (syncing, WorldView, etc.)
+// Rydde bort unnødvendig quick-fixes 
+// Robusthet mtp packetloss
