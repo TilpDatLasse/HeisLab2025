@@ -2,6 +2,7 @@ package timer
 
 import (
 	"time"
+
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 )
 
@@ -16,7 +17,7 @@ func get_wall_time() float64 {
 }
 
 func Timer_start(duration float64) {
-	go Time(timer_channel)
+	//go Time(timer_channel)
 	timerEndTime = get_wall_time() + duration
 	timerActive = true
 }
@@ -32,7 +33,9 @@ func Timer_timed_out() bool {
 func Time(reciever chan<- bool) {
 	for {
 		if Timer_timed_out() && !elevator_io.GetObstruction() {
+			Timer_stop()
 			reciever <- true
 		}
+		time.Sleep(15 * time.Millisecond)
 	}
 }

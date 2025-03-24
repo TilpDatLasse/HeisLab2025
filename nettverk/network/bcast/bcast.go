@@ -32,13 +32,17 @@ func Transmitter(port int, chans ...interface{}) {
 	conn := conn.DialBroadcastUDP(port)
 	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
 	for {
-
+		mutex.Lock()
 		chosen, value, _ := reflect.Select(selectCases)
+		mutex.Unlock()
+		mutex.Lock()
 		jsonstr, _ := json.Marshal(value.Interface())
+		mutex.Unlock()
 		ttj, _ := json.Marshal(typeTaggedJSON{
 			TypeId: typeNames[chosen],
 			JSON:   jsonstr,
 		})
+
 		if len(ttj) > bufSize {
 			panic(fmt.Sprintf(
 				"Tried to send a message longer than the buffer size (length: %d, buffer size: %d)\n\t'%s'\n"+

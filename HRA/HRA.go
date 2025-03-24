@@ -42,9 +42,10 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 		// 	fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
 		// }
 
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(400 * time.Millisecond)
 
 		ch_shouldSync <- true //forespørsel om synking
+		fmt.Println("yo")
 
 		infoMap := <-ch_fromSync //venter på at synking er ferdig
 

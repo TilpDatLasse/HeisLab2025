@@ -273,7 +273,7 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her m√
 			list[0] = hallRequests[i][j]
 			list[1] = elevator.Requests[i][j]
 			//fmt.Println("LISTE: ", list)
-			elevator.Requests[i][j] = elev.CyclicUpdate(list)
+			elevator.Requests[i][j] = elev.CyclicUpdate(list, false)
 		}
 	}
 	//fmt.Println("REQ: ", elevator.Requests)

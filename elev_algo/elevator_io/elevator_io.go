@@ -290,7 +290,7 @@ func toBool(a byte) bool {
 }
 
 // oppdaterer confirmationstate
-func CyclicUpdate(list []ConfirmationState) ConfirmationState {
+func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState {
 	isPresent := map[ConfirmationState]bool{} // map som lagrer om hver confimationstate(0,1,2) er tilstede
 	for _, v := range list {
 		isPresent[v] = true
@@ -302,7 +302,12 @@ func CyclicUpdate(list []ConfirmationState) ConfirmationState {
 		//fmt.Println("Order registrerd on all peers, Confirmed!")
 		return 2
 	case isPresent[2] && isPresent[0]: // alle har 0 eller 2 (noen har utført ordren)
-		return 0
+		if wasTimedOut {
+			return 2
+		} else {
+			return 0
+		}
+
 	case isPresent[0] && isPresent[1]: // alle har 0 eller 1 (noen har fått en ny ordre)
 		return 1
 	}
