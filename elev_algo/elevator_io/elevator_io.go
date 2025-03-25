@@ -310,6 +310,9 @@ func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState 
 
 	case isPresent[0] && isPresent[1]: // alle har 0 eller 1 (noen har fått en ny ordre)
 		return 1
+
+	case !isPresent[1] && !isPresent[2]:
+		return 0
 	}
-	return 0 //default
+	return 1 //default
 }

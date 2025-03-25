@@ -8,6 +8,7 @@ import (
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
+	"github.com/TilpDatLasse/HeisLab2025/syncing"
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
@@ -46,8 +47,10 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 		// }
 
 		time.Sleep(1000 * time.Millisecond)
-
-		ch_shouldSync <- true //forespørsel om synking
+		fmt.Println("yolo")
+		if !syncing.SyncRequest {
+			ch_shouldSync <- true //forespørsel om synking
+		}
 		fmt.Println("yo")
 
 		infoMap := <-ch_fromSync //venter på at synking er ferdig

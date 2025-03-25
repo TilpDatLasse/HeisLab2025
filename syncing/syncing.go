@@ -9,21 +9,26 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
+var SyncRequest = false
+
 func Syncing(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
-		syncRequest := <-ch_shouldSync
-		if syncRequest {
+		SyncRequest = <-ch_shouldSync
+		if SyncRequest {
+			fmt.Println("ture syncreq")
 			worldview.ShouldSync = true
 			Sync(ch_shouldSync, ch_syncRequestsSingleElev) //channel will be blocking if this is not a go-routine
 
 		} else { //syncRequest == false, synk ferdig
 			fmt.Println("Sync done!!")
 			worldview.InfoMapMutex.Lock() // Lås mutex før lesing fra InfoMap
+			fmt.Println("før")
 			select {
 			case ch_fromSync <- worldview.InfoMap:
 			default:
 				fmt.Println("Advarsel: Mistet en infomapmelding (kanal full)")
 			}
+			fmt.Println("etter")
 			worldview.InfoMapMutex.Unlock() // Lås opp mutex etter lesing
 
 			worldview.ShouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp
@@ -38,7 +43,7 @@ func Syncing(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.Info
 func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
 		worldview.WVMapMutex.Lock()
-		worldview.CompareAndUpdateInfoMap(ch_syncRequestsSingleElev, false) //wasTimedOut can only be true when we receive a new update
+		worldview.CompareAndUpdateInfoMap(ch_syncRequestsSingleElev) //wasTimedOut can only be true when we receive a new update
 		worldview.WVMapMutex.Unlock()
 		if AllWorldViewsEqual(worldview.WorldViewMap) {
 			go syncDone(ch_shouldSync)

@@ -18,7 +18,7 @@ var WVMapMutex sync.Mutex
 
 var MyWorldView = WorldView{
 	InfoMap:   make(map[string]InformationElev), // Initialiserer mappet
-	timestamp: get_wall_time(),
+	Timestamp: get_wall_time(),
 }
 
 var WorldViewMap = make(map[string]WorldView) // map som holder alle sine wvs
@@ -30,8 +30,8 @@ var InfoElev = InformationElev{
 type WorldView struct {
 	InfoMap   map[string]InformationElev
 	Id        string
-	timestamp float64
-	peerList  peers.PeerUpdate
+	Timestamp float64
+	PeerList  peers.PeerUpdate
 }
 
 type InformationElev struct {
@@ -62,20 +62,22 @@ func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 		wv := <-ch_WVRx //worldview mottatt (dette skjer bare når vi holder på å synke)
 
 		if wv.Id != "" {
-			wasTimedOut := false
+			// wasTimedOut := false
 			WVMapMutex.Lock()
-			if _, ok := WorldViewMap[wv.Id]; !ok {
-				fmt.Println("yoyoyo")
-				wasTimedOut = true
-			}
+			// if _, ok := WorldViewMap[wv.Id]; !ok {
+			// 	fmt.Println("yoyoyo")
+			// 	wasTimedOut = true
+			// }
 			WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
+			//peerUpdateCh <- wv.PeerList
+			//fmt.Println("TIMESTAMP: ", wv.Timestamp)
 			WVMapMutex.Unlock()
 			if wv.Id != ID { //noen andre sendte
 				InfoMapMutex.Lock()
 				InfoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
 				InfoMapMutex.Unlock()
-				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev, wasTimedOut)
-				//MyWorldView.timestamp = get_wall_time()
+				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
+				MyWorldView.Timestamp = get_wall_time()
 				time.Sleep(10 * time.Millisecond)
 
 				if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
@@ -90,10 +92,13 @@ func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	}
 }
 
-func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, wasTimedOut bool) {
+func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	InfoMapMutex.Lock() // Lås mutex før lesing og skriving til InfoMap
 	//fmt.Println("INFO MAP: ", InfoMap)
-	//wasTimedOut := wasTimedOut()
+	wasTimedOut := wasTimedOut()
+	if wasTimedOut {
+		fmt.Println("---------------------timed out ----------------------")
+	}
 	if len(InfoMap) != 0 {
 		//denne delen sammenlikner hallrequests og oppdaterer de
 		for i := 0; i < elev.N_FLOORS; i++ {
@@ -111,9 +116,13 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 				}
 				update := elev.CyclicUpdate(listOfElev, wasTimedOut)
 
-				for _, elev := range InfoMap {
-					elev.HallRequests[i][j] = update
+				if _, ok := InfoMap[ID]; ok {
+					InfoMap[ID].HallRequests[i][j] = update
 				}
+
+				// for _, elev := range InfoMap {
+				// 	elev.HallRequests[i][j] = update
+				// }
 			}
 		}
 		// denne delen sammenlikner locked og oppdaterer
@@ -125,14 +134,17 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 		}
 		update := elev.CyclicUpdate(listOfElev, wasTimedOut)
 
-		for key, e := range InfoMap {
-			e.Locked = update
-			InfoMap[key] = e
-			if key == ID {
-				InfoElev.Locked = update
-			}
+		InfoElev.Locked = update
+		InfoMap[ID] = InfoElev
 
-		}
+		// for key, e := range InfoMap {
+		// 	e.Locked = update
+		// 	InfoMap[key] = e
+		// 	if key == ID {
+		// 		InfoElev.Locked = update
+		// 	}
+
+		// }
 	}
 	select {
 	case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
@@ -174,6 +186,9 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 		// }
 		// InfoMapMutex.Unlock()
 		time.Sleep(50 * time.Millisecond)
+		InfoMapMutex.Lock()
+		//fmt.Println("InfoMap: ", InfoMap)
+		InfoMapMutex.Unlock()
 
 	}
 }
@@ -245,19 +260,19 @@ func get_wall_time() float64 {
 }
 
 func wasTimedOut() bool {
-	var timeOut float64 = 0.01
+	var timeOut float64 = 1.0
 	var keyList []string
 	var maxDiff float64 = 0
 	for key, _ := range WorldViewMap {
 		keyList = append(keyList, key)
 	}
 	for i := 0; i < len(keyList)-1; i++ {
-		Diff := math.Abs(WorldViewMap[keyList[i]].timestamp - WorldViewMap[keyList[i+1]].timestamp)
+		Diff := math.Abs(WorldViewMap[keyList[i]].Timestamp - WorldViewMap[keyList[i+1]].Timestamp)
 
 		if Diff > maxDiff {
 			maxDiff = Diff
 		}
 	}
-	fmt.Println("WASTIMEDOUT: ", maxDiff)
+	//fmt.Println("WASTIMEDOUT: ", maxDiff)
 	return maxDiff > timeOut
 }

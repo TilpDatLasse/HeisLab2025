@@ -310,6 +310,13 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her m√
 			list[1] = elevator.Requests[i][j]
 			//fmt.Println("LISTE: ", list)
 			elevator.Requests[i][j] = elev.CyclicUpdate(list, false)
+			if elevator.Requests[i][j] == 2 && hallRequests[i][j] != 2 {
+				elevator.Requests[i][j] = 1
+			}
+			if list[1] == 2 && elevator.Requests[i][j] == 0 {
+				fmt.Println("--------------------- Order deleted -----------------------")
+				fmt.Println("list[0]:", list[0], list[1])
+			}
 		}
 	}
 	//fmt.Println("REQ: ", elevator.Requests)
