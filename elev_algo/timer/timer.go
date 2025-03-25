@@ -12,13 +12,13 @@ var (
 	timerActive   bool
 )
 
-func get_wall_time() float64 {
+func Get_wall_time() float64 {
 	return float64(time.Now().UnixNano()) / 1e9
 }
 
 func Timer_start(duration float64) {
 	//go Time(timer_channel)
-	timerEndTime = get_wall_time() + duration
+	timerEndTime = Get_wall_time() + duration
 	timerActive = true
 }
 
@@ -27,7 +27,7 @@ func Timer_stop() {
 }
 
 func Timer_timed_out() bool {
-	return timerActive && get_wall_time() > timerEndTime
+	return timerActive && Get_wall_time() > timerEndTime
 }
 
 func Time(reciever chan<- bool) {

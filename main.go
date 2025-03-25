@@ -87,6 +87,6 @@ func main() {
 
 // - 3 sekunder problemet
 // - write og iterate problemet
-// - Lys på i millisekud så borte problemet
+// - Lys på i millisekund så borte problemet
 // - hvordan fikser vi at en heis plutselig er stuck mellom to etasjer? vi må restarte den
-
+// - Må vi også sjekke packetloss til serveren. Altså mellom server og vår kode?

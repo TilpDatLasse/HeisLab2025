@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"fmt"
+	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -99,6 +100,41 @@ func Fsm_onFloorArrival(newFloor int) {
 		setAllLights(elevator)
 		elevator.State = elev.DOOROPEN
 	}
+}
+
+func MotorTimeout() {
+	var prevState elev.State = elev.IDLE
+	timeout_time := 12.0
+	var time_started float64 = 0.0
+	for {
+		if (elevator.State == elev.MOVE) && (elevator.State != prevState) {
+			time_started = timer.Get_wall_time()
+
+		}
+		if (elevator.State == elev.MOVE) && (prevState == elev.MOVE) && ((time_started + timeout_time) < timer.Get_wall_time()) {
+			fmt.Println("---------------------Motor timeout----------------------------")
+			RestartElevator()
+
+			time_started = timer.Get_wall_time()
+		}
+
+		prevState = elevator.State
+
+		time.Sleep(200 * time.Millisecond)
+
+	}
+
+}
+
+func RestartElevator() {
+	outputDevice.MotorDirection(elev.MD_Stop)
+	for i := 0; i < 300; i++ {
+		time.Sleep(10 * time.Millisecond)
+		outputDevice.MotorDirection(elev.MD_Stop)
+	}
+	fmt.Println("Starter heismotor på nytt, går videre")
+	elevator.State = elev.IDLE
+
 }
 
 func Fsm_onDoorTimeout() {

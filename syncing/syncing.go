@@ -48,12 +48,12 @@ func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.Conf
 			fmt.Println("Worldviews are not equal")
 			//fmt.Println("WV: ", worldview.WorldViewMap)
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
 	}
 }
 
 func syncDone(ch_shouldSync chan bool) {
-		ch_shouldSync <- false
+	ch_shouldSync <- false
 }
 
 func AllWorldViewsEqual(worldViewMap map[string]worldview.WorldView) bool {

@@ -31,9 +31,12 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 		hraExecutable = "hall_request_assigner"
 	case "windows":
 		hraExecutable = "hall_request_assigner.exe"
+	case "darwin":
+		hraExecutable = "hall_request_assigner_mac"
 	default:
 		panic("OS not supported")
 	}
+	fmt.Println("HRA executable:", hraExecutable)
 
 	for {
 
@@ -42,7 +45,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 		// 	fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
 		// }
 
-		time.Sleep(400 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 
 		ch_shouldSync <- true //forespørsel om synking
 		fmt.Println("yo")

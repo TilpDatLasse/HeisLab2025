@@ -1,6 +1,8 @@
 package elev_algo
 
 import (
+	"fmt"
+
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
@@ -25,12 +27,14 @@ func Elev_main(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.
 
 	if input.FloorSensor() == -1 {
 		fsm.Fsm_onInitBetweenFloors()
+		fmt.Println("Dytter heisen ned til nærmeste etasje")
 	}
 
 	go elev.PollButtons(ch.Drv_buttons)
 	go elev.PollFloorSensor(ch.Drv_floors)
 	go elev.PollObstructionSwitch(ch.Drv_obstr)
 	go elev.PollStopButton(ch.Drv_stop)
+	go fsm.MotorTimeout()
 	go timer.Time(ch.Timer_channel)
 
 	for {
