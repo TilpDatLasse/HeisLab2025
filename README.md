@@ -2,7 +2,7 @@ This is a peer-to-peer elevator system. The code will launch a single peer to th
 
 The system will operate a single elevator if launched on its own. When multiple peers are launched, the peers will communicate over udp to ensure service of elevator orders. The system should function when packetloss occurs, as well as when sudden failures in the system happens. The full functionality specifications can be found here: ------------- insert link -----------------
 
-The system consists of several modules, resposnible for different operations within the program. Here is a short list of each modules responsibilities:
+The system consists of several modules, responsible for different operations within the program. Here is a short list of each modules responsibilities:
 
 elev_algo: Runs a single assigned elevator over TCP communication. Responsible for finite state machine of the elevator and bulletproof excecution of elevatormovements and user input and output.
 
@@ -29,6 +29,6 @@ udpPeersPort = 16500
 
 Example of how to run the code with flags:
 
-go run main.go -id=two -simPort=11111 -udpWVPort=22222 -udpPeersPort=333333
+go run main.go -id=two -simPort=11111 -udpWVPort=22222 -udpPeersPort=33333
 
 

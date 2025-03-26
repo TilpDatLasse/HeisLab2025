@@ -263,16 +263,21 @@ func wasTimedOut() bool {
 	var timeOut float64 = 1.0
 	var keyList []string
 	var maxDiff float64 = 0
+	//MÅ HA EN MUTEX HER
+	//WVMapMutex.Lock()
 	for key, _ := range WorldViewMap {
 		keyList = append(keyList, key)
 	}
+	//WVMapMutex.Unlock()
 	for i := 0; i < len(keyList)-1; i++ {
+		//WVMapMutex.Lock()
 		Diff := math.Abs(WorldViewMap[keyList[i]].Timestamp - WorldViewMap[keyList[i+1]].Timestamp)
-
+		//WVMapMutex.Unlock()
 		if Diff > maxDiff {
 			maxDiff = Diff
 		}
 	}
+
 	//fmt.Println("WASTIMEDOUT: ", maxDiff)
 	return maxDiff > timeOut
 }

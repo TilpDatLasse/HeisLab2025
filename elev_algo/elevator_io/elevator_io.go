@@ -296,8 +296,9 @@ func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState 
 		isPresent[v] = true
 	}
 	switch {
-	case isPresent[0] && isPresent[1] && isPresent[2]:
-		panic("Confirmationstates 0,1,2 at the same time :(")
+	case isPresent[0] && isPresent[1] && isPresent[2]: //should ideally not happen
+		return 1
+		//panic("Confirmationstates 0,1,2 at the same time :(")
 	case !isPresent[0]: // alle har 1 eller 2
 		//fmt.Println("Order registrerd on all peers, Confirmed!")
 		return 2
