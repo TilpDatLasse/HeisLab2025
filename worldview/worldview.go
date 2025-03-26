@@ -8,7 +8,7 @@ import (
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
+	"github.com/TilpDatLasse/HeisLab2025/network/peers"
 )
 
 var ID string
@@ -53,7 +53,7 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-func WorldViewFunc(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_shouldSync chan bool, id string) {
+func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_shouldSync chan bool, id string) {
 	ID = id
 	MyWorldView.Id = ID
 	InfoElev.ElevID = ID

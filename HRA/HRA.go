@@ -41,14 +41,9 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 
 	for {
 
-		// fmt.Printf("InfoMap: ")
-		// for k, v := range nettverk.InfoMap {
-		// 	fmt.Printf("%6v :  %+v\n", k, v.HallRequests)
-		// }
-
 		time.Sleep(1000 * time.Millisecond)
 		fmt.Println("yolo")
-		if !syncing.SyncRequest {
+		if !syncing.SyncRequest { // litt dårlig kode men funker vel
 			ch_shouldSync <- true //forespørsel om synking
 		}
 		fmt.Println("yo")
@@ -95,9 +90,8 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 	}
 }
 
-// Henter output fra HRA og sender videre til elev-modulen
+// Sender output til elev-modulen
 func sendToElev(output map[string][][2]bool, ch_elevatorQueue chan [][2]bool, ID string) {
-
 	for k, v := range output {
 		if k == ID {
 			ch_elevatorQueue <- v

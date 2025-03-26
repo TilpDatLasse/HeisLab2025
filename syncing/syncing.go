@@ -11,17 +11,17 @@ import (
 
 var SyncRequest = false
 
-func Syncing(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
+func SyncingMain(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
 		SyncRequest = <-ch_shouldSync
 		if SyncRequest {
 			fmt.Println("ture syncreq")
 			worldview.ShouldSync = true
-			Sync(ch_shouldSync, ch_syncRequestsSingleElev) //channel will be blocking if this is not a go-routine
+			Sync(ch_shouldSync, ch_syncRequestsSingleElev)
 
 		} else { //syncRequest == false, synk ferdig
 			fmt.Println("Sync done!!")
-			worldview.InfoMapMutex.Lock() // Lås mutex før lesing fra InfoMap
+			worldview.InfoMapMutex.Lock()
 			fmt.Println("før")
 			select {
 			case ch_fromSync <- worldview.InfoMap:
@@ -29,15 +29,12 @@ func Syncing(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.Info
 				fmt.Println("Advarsel: Mistet en infomapmelding (kanal full)")
 			}
 			fmt.Println("etter")
-			worldview.InfoMapMutex.Unlock() // Lås opp mutex etter lesing
+			worldview.InfoMapMutex.Unlock()
 
-			worldview.ShouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp
+			worldview.ShouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp, ellers kan input blir endret før det sendes til hra men virker so det går bra
 			worldview.InfoElev.Locked = 0
-			//fmt.Println("Locked: ", worldview.InfoElev.Locked)
-
 		}
 	}
-
 }
 
 func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
@@ -45,6 +42,7 @@ func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.Conf
 		worldview.WVMapMutex.Lock()
 		worldview.CompareAndUpdateInfoMap(ch_syncRequestsSingleElev) //wasTimedOut can only be true when we receive a new update
 		worldview.WVMapMutex.Unlock()
+		worldview.WVMapMutex.Lock()
 		if AllWorldViewsEqual(worldview.WorldViewMap) {
 			go syncDone(ch_shouldSync)
 			//fmt.Println("All worldviews are equal")
@@ -62,7 +60,7 @@ func syncDone(ch_shouldSync chan bool) {
 }
 
 func AllWorldViewsEqual(worldViewMap map[string]worldview.WorldView) bool {
-
+	worldview.WVMapMutex.Unlock()
 	var reference worldview.WorldView
 	isFirst := true
 

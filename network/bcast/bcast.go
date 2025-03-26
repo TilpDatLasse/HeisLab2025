@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"net"
 	"reflect"
-	"sync"
 
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/conn"
+	"github.com/TilpDatLasse/HeisLab2025/network/conn"
 )
 
 const bufSize = 1024
 
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
 // it on `port`
-var mutex = &sync.Mutex{}
 
 func Transmitter(port int, chans ...interface{}) {
 
@@ -32,12 +30,8 @@ func Transmitter(port int, chans ...interface{}) {
 	conn := conn.DialBroadcastUDP(port)
 	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
 	for {
-		mutex.Lock()
 		chosen, value, _ := reflect.Select(selectCases)
-		mutex.Unlock()
-		mutex.Lock()
 		jsonstr, _ := json.Marshal(value.Interface())
-		mutex.Unlock()
 		ttj, _ := json.Marshal(typeTaggedJSON{
 			TypeId: typeNames[chosen],
 			JSON:   jsonstr,

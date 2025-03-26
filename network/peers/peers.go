@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/conn"
+	"github.com/TilpDatLasse/HeisLab2025/network/conn"
 )
 
 type PeerUpdate struct {

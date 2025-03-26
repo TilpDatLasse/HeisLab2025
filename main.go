@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 
-	//"github.com/TilpDatLasse/HeisLab2025/HRA"
 	"github.com/TilpDatLasse/HeisLab2025/HRA"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo"
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk"
+	"github.com/TilpDatLasse/HeisLab2025/network"
 	"github.com/TilpDatLasse/HeisLab2025/syncing"
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
@@ -25,8 +24,8 @@ func main() {
 
 	flag.StringVar(&id, "id", "one", "id of this peer")
 	flag.StringVar(&simPort, "simPort", "15657", "simulation server port")
-	flag.IntVar(&udpWVPort, "udpVWPort", 14700, "sudp worldviews port")
-	flag.IntVar(&peersPort, "peerPort", 16500, "onlie peers port")
+	flag.IntVar(&udpWVPort, "udpVWPort", 14700, "udp worldviews port")
+	flag.IntVar(&peersPort, "peerPort", 16500, "online peers port")
 	flag.Parse()
 
 	SingElevChans := elev_algo.SingleElevatorChans{
@@ -38,24 +37,20 @@ func main() {
 		Single_elev_queue: make(chan [][2]bool),
 	}
 
-	//ch_toSync := make(chan map[string]nettverk.InformationElev)   //sender infomap
-	ch_fromSync := make(chan map[string]worldview.InformationElev) //sender infomap
+	ch_fromSync := make(chan map[string]worldview.InformationElev) 
 	ch_shouldSync := make(chan bool)
-	//ch_allSynced := make(chan bool)
 	ch_WVRx := make(chan worldview.WorldView)
 	ch_WVTx := make(chan worldview.WorldView)
 	ch_syncRequestsSingleElev := make(chan [][2]elev.ConfirmationState)
 
-	go elev_algo.Elev_main(SingElevChans, ch_syncRequestsSingleElev, simPort)
-	go nettverk.Nettverk_hoved(ch_WVRx, id, peersPort)
-	//go sync.Sync()
-
+	go elev_algo.ElevMain(SingElevChans, ch_syncRequestsSingleElev, simPort)
+	go network.NetworkMain(ch_WVRx, id, peersPort)
 	go HRA.HRAMain(SingElevChans.Single_elev_queue, ch_shouldSync, ch_fromSync, id)
 	go worldview.SetElevatorStatus(ch_WVTx)
-	go nettverk.RecieveWV(ch_WVRx, udpWVPort)
-	go nettverk.BroadcastWV(ch_WVTx, udpWVPort)
-	go worldview.WorldViewFunc(ch_WVRx, ch_syncRequestsSingleElev, ch_shouldSync, id)
-	go syncing.Syncing(ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev)
+	go network.RecieveWV(ch_WVRx, udpWVPort)
+	go network.BroadcastWV(ch_WVTx, udpWVPort)
+	go worldview.WorldViewMain(ch_WVRx, ch_syncRequestsSingleElev, ch_shouldSync, id)
+	go syncing.SyncingMain(ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev)
 
 	select {}
 
@@ -80,6 +75,7 @@ func main() {
 // Robusthet mtp packetloss
 // Locked-variabelen er nok ikke helt robust (?)
 // sjekke hva som egt skjer når den får to ordre i samme etasje (opp og ned), virker ikke som den venter 3 sek
+// endre alt til camelcase(?)
 
 //HUSKE Å SJEKKE UT HVORFOR HEISEN IKKE STOPPER I 3 SEK I ANDRE ETSASJE NÅR DEN GÅR FRA 1-2-3
 
@@ -87,5 +83,6 @@ func main() {
 
 // - 3 sekunder problemet
 // - write og iterate problemet
-// - Lys på i millisekud så borte problemet
-// - hvordan fikser vi at en heis plutselig er stuck mellom to etasjer? vi må restarte den
+// - (Lys på i millisekud så borte problemet)
+// - hvordan fikser vi at en heis plutselig er stuck mellom to etasjer? vi må restarte den  -  her må vi få en av de andre heisene til å ta den
+// litt trøbbel når vi har packetloss og får mange ordre samtidig

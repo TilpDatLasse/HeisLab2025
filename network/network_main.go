@@ -1,10 +1,10 @@
-package nettverk
+package network
 
 import (
 	"fmt"
 
-	b "github.com/TilpDatLasse/HeisLab2025/nettverk/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/nettverk/network/peers"
+	b "github.com/TilpDatLasse/HeisLab2025/network/bcast"
+	"github.com/TilpDatLasse/HeisLab2025/network/peers"
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
@@ -16,7 +16,7 @@ func RecieveWV(ch_WVRx chan worldview.WorldView, udpWVPort int) {
 	b.Receiver(udpWVPort, ch_WVRx)
 }
 
-func Nettverk_hoved(ch_WVRx chan worldview.WorldView, id string, peerPort int) {
+func NetworkMain(ch_WVRx chan worldview.WorldView, id string, peerPort int) {
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
