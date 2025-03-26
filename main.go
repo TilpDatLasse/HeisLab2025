@@ -37,7 +37,7 @@ func main() {
 		Single_elev_queue: make(chan [][2]bool),
 	}
 
-	ch_fromSync := make(chan map[string]worldview.InformationElev) 
+	ch_fromSync := make(chan map[string]worldview.InformationElev)
 	ch_shouldSync := make(chan bool)
 	ch_WVRx := make(chan worldview.WorldView)
 	ch_WVTx := make(chan worldview.WorldView)

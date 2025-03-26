@@ -57,6 +57,7 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	ID = id
 	MyWorldView.Id = ID
 	InfoElev.ElevID = ID
+	MyWorldView.PeerList.Id = ID
 
 	for {
 		wv := <-ch_WVRx //worldview mottatt (dette skjer bare når vi holder på å synke)
@@ -69,7 +70,7 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 			// 	wasTimedOut = true
 			// }
 			WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
-			//peerUpdateCh <- wv.PeerList
+			peers.PeerToUpdate <- wv.PeerList
 			//fmt.Println("TIMESTAMP: ", wv.Timestamp)
 			WVMapMutex.Unlock()
 			if wv.Id != ID { //noen andre sendte

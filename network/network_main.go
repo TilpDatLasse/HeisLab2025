@@ -18,13 +18,13 @@ func RecieveWV(ch_WVRx chan worldview.WorldView, udpWVPort int) {
 
 func NetworkMain(ch_WVRx chan worldview.WorldView, id string, peerPort int) {
 
-	peerUpdateCh := make(chan peers.PeerUpdate)
-	peerTxEnable := make(chan bool)
-	go peers.Transmitter(peerPort, id, peerTxEnable)
-	go peers.Receiver(peerPort, peerUpdateCh)
+	//peerUpdateCh := make(chan peers.PeerUpdate)
+	//peerTxEnable := make(chan bool)
+	//go peers.Transmitter(peerPort, id, peerTxEnable)
+	go peers.UpdatePeers()
 
 	for {
-		p := <-peerUpdateCh
+		p := <-peers.PeerFromUpdate
 		fmt.Printf("Peer update:\n")
 		fmt.Printf("  Peers:    %q\n", p.Peers)
 		fmt.Printf("  New:      %q\n", p.New)
