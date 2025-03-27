@@ -1,6 +1,6 @@
 Elev_algo Module
 ================
-Contains code imported from (https://github.com/TTK4145/driver-go/elevio/elevator_io.git)
+Contains code imported from (https://github.com/TTK4145/driver-go/elevio.git)
 
 
 
