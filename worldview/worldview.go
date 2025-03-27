@@ -8,6 +8,7 @@ import (
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
+	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
 	"github.com/TilpDatLasse/HeisLab2025/network/peers"
 )
 
@@ -18,7 +19,7 @@ var WVMapMutex sync.Mutex
 
 var MyWorldView = WorldView{
 	InfoMap:   make(map[string]InformationElev), // Initialiserer mappet
-	Timestamp: get_wall_time(),
+	Timestamp: timer.Get_wall_time(),
 }
 
 var WorldViewMap = make(map[string]WorldView) // map som holder alle sine wvs
@@ -60,27 +61,22 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	MyWorldView.PeerList.Id = ID
 
 	for {
-		wv := <-ch_WVRx //worldview mottatt (dette skjer bare når vi holder på å synke)
+		wv := <-ch_WVRx //worldview mottatt
 
 		if wv.Id != "" {
-			// wasTimedOut := false
 			WVMapMutex.Lock()
-			// if _, ok := WorldViewMap[wv.Id]; !ok {
-			// 	fmt.Println("yoyoyo")
-			// 	wasTimedOut = true
-			// }
 			WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
 			peers.PeerToUpdate <- wv.PeerList
-			//fmt.Println("TIMESTAMP: ", wv.Timestamp)
 			WVMapMutex.Unlock()
 			if wv.Id != ID { //noen andre sendte
 				InfoMapMutex.Lock()
 				InfoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
 				InfoMapMutex.Unlock()
 				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
-				MyWorldView.Timestamp = get_wall_time()
+				MyWorldView.Timestamp = timer.Get_wall_time()
 				time.Sleep(10 * time.Millisecond)
 
+				//denne er egt ikke nødvendig, alle synker hele tiden uansett
 				if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
 					select {
 					case ch_shouldSync <- true:
@@ -93,25 +89,21 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	}
 }
 
+// Comparing info from the different peers to check if we can update the cyclic counters
 func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	InfoMapMutex.Lock() // Lås mutex før lesing og skriving til InfoMap
-	//fmt.Println("INFO MAP: ", InfoMap)
 	wasTimedOut := wasTimedOut()
-	if wasTimedOut {
-		fmt.Println("---------------------timed out ----------------------")
-	}
 	if len(InfoMap) != 0 {
-		//denne delen sammenlikner hallrequests og oppdaterer de
+
+		//Comparing hallrequests
 		for i := 0; i < elev.N_FLOORS; i++ {
 			for j := 0; j < elev.N_BUTTONS-1; j++ {
 				listOfElev := make([]elev.ConfirmationState, len(InfoMap))
-				//fmt.Println("LEN: ", len(InfoMap))
 				k := 0
 				for _, elev := range InfoMap {
 					if elev.HallRequests == nil {
 						return
 					}
-					//fmt.Println("ELEV: ", elev.HallRequests)
 					listOfElev[k] = elev.HallRequests[i][j]
 					k++
 				}
@@ -120,13 +112,10 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 				if _, ok := InfoMap[ID]; ok {
 					InfoMap[ID].HallRequests[i][j] = update
 				}
-
-				// for _, elev := range InfoMap {
-				// 	elev.HallRequests[i][j] = update
-				// }
 			}
 		}
-		// denne delen sammenlikner locked og oppdaterer
+
+		// Comparing the Locked-attribute
 		listOfElev := make([]elev.ConfirmationState, len(InfoMap))
 		k := 0
 		for _, elev := range InfoMap {
@@ -138,14 +127,6 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 		InfoElev.Locked = update
 		InfoMap[ID] = InfoElev
 
-		// for key, e := range InfoMap {
-		// 	e.Locked = update
-		// 	InfoMap[key] = e
-		// 	if key == ID {
-		// 		InfoElev.Locked = update
-		// 	}
-
-		// }
 	}
 	select {
 	case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
@@ -178,19 +159,8 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 			default:
 				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
 			}
-
 		}
-		// InfoMapMutex.Lock()
-		// select {
-		// case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
-		// default:
-		// }
-		// InfoMapMutex.Unlock()
 		time.Sleep(50 * time.Millisecond)
-		InfoMapMutex.Lock()
-		//fmt.Println("InfoMap: ", InfoMap)
-		InfoMapMutex.Unlock()
-
 	}
 }
 
@@ -217,7 +187,7 @@ func Converter(e elev.Elevator) InformationElev {
 	return input
 }
 
-// konverterer states vi bruker til states HRA bruker
+// Converting elev.state to HRAElevState.Behaviour (string)
 func stateToString(s elev.State) string {
 	switch s {
 	case elev.IDLE:
@@ -233,7 +203,7 @@ func stateToString(s elev.State) string {
 	}
 }
 
-// konverterer dirn vi bruker til dirn HRA bruker
+// Converting elev.MotorDirection to HRAElevState.Direction
 func dirnToString(s elev.MotorDirection) string {
 	switch s {
 	case elev.MD_Up:
@@ -247,17 +217,14 @@ func dirnToString(s elev.MotorDirection) string {
 	}
 }
 
+// Converting cabrequests from ConfirmationState (cyclic-counter) to bool
+// Notice that cab-requests do not need to be confirmed, so both confirmationstates 1 and 2 will yield true
 func cabToBool(list []elev.ConfirmationState) []bool {
 	boolList := make([]bool, len(list))
 	for i, v := range list {
-		boolList[i] = v != 0 // Convert non-zero values to true, zero to false
+		boolList[i] = v != 0
 	}
-
 	return boolList
-}
-
-func get_wall_time() float64 {
-	return float64(time.Now().UnixNano()) / 1e9
 }
 
 func wasTimedOut() bool {
