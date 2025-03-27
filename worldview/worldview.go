@@ -12,25 +12,29 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/network/peers"
 )
 
+var (
+	InfoMapMutex sync.Mutex
+	WVMapMutex   sync.Mutex
+)
+
+var (
+	ID         string
+	ShouldSync bool = false
+	InfoElev   InformationElev
+)
+
+var (
+	InfoMap      = map[string]InformationElev{}
+	WorldViewMap = map[string]WorldView{}
+	MyWorldView  = WorldView{
+		InfoMap:   map[string]InformationElev{},
+		Timestamp: timer.Get_wall_time(),
+	}
+)
+
 type WVChans struct {
 	WorldViewTxChan chan WorldView
 	WorldViewRxChan chan WorldView
-}
-
-var ID string
-var InfoMap = make(map[string]InformationElev)
-var InfoMapMutex sync.Mutex
-var WVMapMutex sync.Mutex
-
-var MyWorldView = WorldView{
-	InfoMap:   make(map[string]InformationElev), // Initialiserer mappet
-	Timestamp: timer.Get_wall_time(),
-}
-
-var WorldViewMap = make(map[string]WorldView) // map som holder alle sine wvs
-var ShouldSync bool = false
-var InfoElev = InformationElev{
-	ElevID: ID,
 }
 
 type WorldView struct {
