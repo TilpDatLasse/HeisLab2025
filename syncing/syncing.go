@@ -21,9 +21,11 @@ func SyncingMain(syncChans SyncChans, getMyWorldView chan worldview.MyWVrequest,
 
 	for {
 		SyncRequest := <-syncChans.ShouldSync
+		fmt.Println("syncing")
+
 		if SyncRequest { //syncRequest == true, request of synching recieved from HRA
-			//worldview.ShouldSync = true
-			worldview.InfoElev.Locked = 1
+			worldview.ShouldSync = true
+
 			Sync(syncChans, getMyWorldView, getWorldViewMap)
 
 		} //else { //syncRequest == false, sync completed
@@ -48,13 +50,18 @@ func Sync(syncChans SyncChans, getMyWorldView chan worldview.MyWVrequest, getWor
 		//worldview.WVMapMutex.Unlock()
 		//worldview.WVMapMutex.Lock()
 
+		fmt.Println(worldview.InfoElev.Locked)
+
 		wvMap := worldview.GetWorldViewMap(getWorldViewMap)
 		if AllWorldViewsEqual(wvMap) {
+			fmt.Println("Sync done!!")
 			syncChans.InformationElevFromSync <- worldview.GetMyWorldView(getMyWorldView).InfoMap
 			//go syncDone(ShouldSync)
-			fmt.Println("Sync done!!")
+			//fmt.Println("Sync done!!")
 			worldview.InfoElev.Locked = 0
 			break
+		} else {
+			fmt.Println("yo")
 		}
 		time.Sleep(200 * time.Millisecond)
 	}

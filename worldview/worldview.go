@@ -19,7 +19,7 @@ var (
 
 var (
 	ID string
-	//ShouldSync bool = false
+	ShouldSync bool = false
 	InfoElev InformationElev
 )
 
@@ -86,6 +86,14 @@ func wvServer(wvServerChans WVServerChans) { // ha channel som input?
 			wvRequest.ResponseChan <- MyWorldView
 		case elevInfo := <-wvServerChans.SetMyWorldView:
 			MyWorldView.InfoMap[ID] = elevInfo
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func wvMapServer(wvServerChans WVServerChans) { // ha channel som input?
+	for {
+		select {
 		case wvMapRequest := <-wvServerChans.GetWorldViewMap:
 			wvMapRequest.ResponseChan <- WorldViewMap
 		case wv := <-wvServerChans.SetWorldViewMap:
@@ -189,21 +197,23 @@ func SetElevatorStatus(ch_WVTx chan WorldView, wvServerChans WVServerChans) {
 		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
 		if InfoElev.Locked == 0 { //hvis ikke låst
 			InfoElev = Converter(fsm.FetchElevatorStatus())
-			// if ShouldSync {
-			// 	InfoElev.Locked = 1
-			// }
+			if ShouldSync {
+				InfoElev.Locked = 1
+			}
 		}
 		if ID != "" {
 			InfoElev.ElevID = ID
 
 			wvServerChans.SetMyWorldView <- InfoElev
 
-			wvServerChans.SetWorldViewMap <- GetMyWorldView(wvServerChans.GetMyWorldView)
+			myWV := GetMyWorldView(wvServerChans.GetMyWorldView)
+
+			wvServerChans.SetWorldViewMap <- myWV
 			if hasMotorStopped {
 				continue
 			}
 			select {
-			case ch_WVTx <- GetMyWorldView(wvServerChans.GetMyWorldView):
+			case ch_WVTx <- myWV:
 			default:
 				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
 			}
