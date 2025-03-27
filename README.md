@@ -1,26 +1,26 @@
 
-Elevator Project TTK4145 Spring 2025
+Elevator Project - TTK4145 Spring 2025
 ==========================================
 
+This project implements a peer-to-peer elevator control system. Instead of a traditional master-slave architecture, we chose a P2P approach to increase fault tolerance and handle packet loss more effectively.
 
-This is a peer-to-peer elevator system. The code will launch a single peer to the elevator network. We chose a peer-to-peer system as we found this the easiest, as having a master-slave system would be harder to control when packetloss and network connection loss occurs.
-This project implements a **peer-to-peer elevator control system**. Instead of a traditional master-slave architecture, we chose a P2P approach to **increase fault tolerance** and **handle packet loss more effectively**.
-
-The system will operate a single elevator if launched on its own. When multiple peers are launched, the peers will communicate over udp to ensure service of elevator orders. The system should function when packetloss occurs, as well as when sudden failures in the system happens. The full functionality specifications can be found [here](https://github.com/TTK4145/Project.git).
+The system will operate a single elevator if launched on its own. When multiple peers are launched, the peers will communicate over UDP to ensure service of all elevator orders. The system should function when packet loss occurs, as well as when sudden failures in the system happens. The full functionality specifications can be found [here](https://github.com/TTK4145/Project.git).
 
 
-## 🚀 **Features**  
+Features
+--------
 ✔ Peer-to-peer communication for distributed elevator control  
 ✔ Fault-tolerant design that handles network failures  
 ✔ Hall Request Assigner (HRA) for efficient elevator dispatching  
-✔ Supports both a **physical** and **simulated** elevator  
-✔ Uses **UDP for inter-peer communication** and **TCP for elevator control** 
+✔ Supports both a physical and simulated** elevator  
+✔ Uses UDP for inter-peer communication and TCP for elevator control 
 
 
 Modules
 --------
 
-The system consists of several modules, responsible for different operations within the program. Here is a short list of each modules responsibilities:
+The system consists of several modules, responsible for different operations within the program. 
+Here is a short list of each modules responsibilities:
 
 elev_algo: Runs a single assigned elevator over TCP communication. Responsible for finite state machine of the elevator and bulletproof excecution of elevatormovements and user input and output.
 
@@ -32,16 +32,14 @@ syncing:
 
 worldview:
 
-How to run the program
------------------------
-
 How to run the program:
+-----------------------
 
 To run the code, one will have to start either the physical elevator server or the elevator simulator found [here](https://github.com/TTK4145/Simulator-v2.git).
 
 When running the program in the terminal, you have the option to set a flag for the peer name (id), UDP ports (udpWVPort and udpPeersPort) and TCP Port (simPort) between the program and the server.
 
-To set a a flag when running the code, include -FLAGIDENTIFER=value, where FLAGIDENTIFIER is the flagtaht should be set and value if the value it should be set to. If no flags are set, the code will run with the standard values:
+To set a a flag when running the code, include -FLAGIDENTIFER=value, where FLAGIDENTIFIER is the flag that should be set and value if the value it should be set to. If no flags are set, the code will run with the standard values:
 
 id = one
 simPort = 15657
