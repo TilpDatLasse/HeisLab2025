@@ -14,7 +14,7 @@ Timer
 Elevator_io
 ----------
 
-It contains contains code imported from (https://github.com/TTK4145/driver-go.git).
+Contains contains code imported from (https://github.com/TTK4145/driver-go.git).
 
 The basic elevator algorithm
 -------------
@@ -35,16 +35,4 @@ The elevator algorithm is based on preferring to continue in the direction of tr
      - A: Always clear the request for entering the elevator in the opposite direction
      - B: Clear the request in the opposite direction if there are no further requests in the direction of travel
      
-The implementations of these three functions are found in [requests.c](requests.c).
-
-Implementation notes
-----
-
-The standard disclaimer of "some parts of this were written in less than 10 minutes" applies.
-
-The request buttons are called "Hall" and "Cab", as opposed to "external" and "internal" (or "Call" and "Command"), as I believe this is the correct terminology.
-
-The "state-machine-state" is called "behaviour", as the full state of the elevator also includes direction, floor, and active requests. "Behaviour" just seems like a more precise name: An elevator that is "moving" is doing a different kind of thing (or "verbing a different verb", if you like) than an elevator that is "being idle".
-
-`fsm.c` and `timer.c` have local state. `fsm.c` because it is a state machine (so it needs state), `timer.c` because it needs to share state with the "outside world" (because it is a timer). It is possible to circumvent this by lifting the elevator state out of `fsm.c` (by passing the current state and returning the new state from each of the fsm functions), and including the "doorCloseTime" in the elevator state. (But to make the fsm functions completely pure, you'd also have to return the "list-of-output-actions" along with the new state, but this is a giant hassle in C. I chose to stick to the more imperative C-like way of doing it, rather than trying to do functional programming in C)
-
+The implementations of these three functions are found in [requests.go](requests.go).
