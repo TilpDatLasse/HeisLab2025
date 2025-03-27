@@ -37,19 +37,21 @@ func main() {
 		Single_elev_queue: make(chan [][2]bool),
 	}
 
+	WorldViewChans := worldview.WVChans{
+		WorldViewTxChan: make(chan worldview.WorldView),
+		WorldViewRxChan: make(chan worldview.WorldView),
+	}
+
 	ch_fromSync := make(chan map[string]worldview.InformationElev)
 	ch_shouldSync := make(chan bool)
-	ch_WVRx := make(chan worldview.WorldView)
-	ch_WVTx := make(chan worldview.WorldView)
+
 	ch_syncRequestsSingleElev := make(chan [][2]elev.ConfirmationState)
 
 	go elev_algo.ElevMain(SingElevChans, ch_syncRequestsSingleElev, simPort)
-	go network.NetworkMain(ch_WVRx, id, peersPort)
+	go network.NetworkMain(id, peersPort, WorldViewChans, udpWVPort)
 	go HRA.HRAMain(SingElevChans.Single_elev_queue, ch_shouldSync, ch_fromSync, id)
-	go worldview.SetElevatorStatus(ch_WVTx)
-	go network.RecieveWV(ch_WVRx, udpWVPort)
-	go network.BroadcastWV(ch_WVTx, udpWVPort)
-	go worldview.WorldViewMain(ch_WVRx, ch_syncRequestsSingleElev, ch_shouldSync, id)
+	go worldview.SetElevatorStatus(WorldViewChans.WorldViewTxChan)
+	go worldview.WorldViewMain(WorldViewChans.WorldViewRxChan, ch_syncRequestsSingleElev, ch_shouldSync, id)
 	go syncing.SyncingMain(ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev)
 
 	select {}
@@ -79,10 +81,7 @@ func main() {
 
 //HUSKE Å SJEKKE UT HVORFOR HEISEN IKKE STOPPER I 3 SEK I ANDRE ETSASJE NÅR DEN GÅR FRA 1-2-3
 
-// The big three
-
 // - 3 sekunder problemet
 // - write og iterate problemet
-// - (Lys på i millisekud så borte problemet)
 // - hvordan fikser vi at en heis plutselig er stuck mellom to etasjer? vi må restarte den  -  her må vi få en av de andre heisene til å ta den
-// litt trøbbel når vi har packetloss og får mange ordre samtidig
+// - dra ut strømmen. Heis er fortsatt online? Hra kan fortsatt gi den ordre.

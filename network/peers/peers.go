@@ -9,7 +9,7 @@ type PeerUpdate struct {
 	Peers []string
 	New   string
 	Lost  []string
-	Id    string 
+	Id    string //mulig dette ikke går
 }
 
 const (

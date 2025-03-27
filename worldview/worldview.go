@@ -12,6 +12,11 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/network/peers"
 )
 
+type WVChans struct {
+	WorldViewTxChan chan WorldView
+	WorldViewRxChan chan WorldView
+}
+
 var ID string
 var InfoMap = make(map[string]InformationElev)
 var InfoMapMutex sync.Mutex
