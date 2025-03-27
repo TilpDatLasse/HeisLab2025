@@ -8,7 +8,6 @@ import (
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/syncing"
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
@@ -30,11 +29,9 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 
 		time.Sleep(1000 * time.Millisecond)
 
-		if !syncing.SyncRequest { // litt dårlig kode men funker vel
-			ch_shouldSync <- true //forespørsel om synking
-		}
+		ch_shouldSync <- true //Sync-request
 
-		infoMap := <-ch_fromSync //venter på at synking er ferdig
+		infoMap := <-ch_fromSync //waiting for completed sync, recieving input
 
 		var input worldview.HRAInput
 		input.States = make(map[string]worldview.HRAElevState)
@@ -42,7 +39,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 		for key := range infoMap {
 			elevstate := infoMap[key].State
 			input.States[key] = elevstate
-			input.HallRequests = hallToBool(infoMap[key].HallRequests) //koverterer fra confirmationstate til bool
+			input.HallRequests = hallToBool(infoMap[key].HallRequests)
 		}
 
 		if len(infoMap) > 0 {
@@ -76,7 +73,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 	}
 }
 
-// Sender output til elev-modulen
+// sending output from HRA to local elev
 func sendToElev(output map[string][][2]bool, ch_elevatorQueue chan [][2]bool, ID string) {
 	for k, v := range output {
 		if k == ID {
