@@ -37,16 +37,14 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 	default:
 		panic("OS not supported")
 	}
-	fmt.Println("HRA executable:", hraExecutable)
 
 	for {
 
 		time.Sleep(1000 * time.Millisecond)
-		fmt.Println("yolo")
+
 		if !syncing.SyncRequest { // litt dårlig kode men funker vel
 			ch_shouldSync <- true //forespørsel om synking
 		}
-		fmt.Println("yo")
 
 		infoMap := <-ch_fromSync //venter på at synking er ferdig
 
@@ -80,7 +78,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 				return
 			}
 
-			sendToElev(*output, ch_elevatorQueue, ID) //sener output til elev
+			sendToElev(*output, ch_elevatorQueue, ID)
 
 			fmt.Printf("output: \n")
 			for k, v := range *output {
