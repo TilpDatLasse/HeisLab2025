@@ -37,11 +37,11 @@ type WVChans struct {
 	WorldViewRxChan chan WorldView
 }
 
-var GetMyWorldView = make(chan MyWVrequest)
-var SetMyWorldView = make(chan WorldView)
+var ChGetMyWorldView = make(chan MyWVrequest)
+var ChSetMyWorldView = make(chan InformationElev)
 
-var GetWorldViewMap = make(chan WVMapRequest)
-var SetWorldViewMap = make(chan WorldView)
+var ChGetWorldViewMap = make(chan WVMapRequest)
+var ChSetWorldViewMap = make(chan WorldView)
 
 type MyWVrequest struct {
 	ResponseChan chan WorldView
@@ -77,44 +77,46 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-func WVServer() { // ha channel som input?
+func wvServer() { // ha channel som input?
 	for {
 		select {
-		case wvRequest := <-GetMyWorldView:
+		case wvRequest := <-ChGetMyWorldView:
 			wvRequest.ResponseChan <- MyWorldView
-		//case wv := <-SetMyWorldView:
-			//WorldViewMap[wv.Id] = wv
-			//peers.PeerToUpdate <- wv.PeerList
-		case wvMapRequest := <-GetWorldViewMap:
+		case elevInfo := <-ChSetMyWorldView:
+			MyWorldView.InfoMap[ID] = elevInfo
+		case wvMapRequest := <-ChGetWorldViewMap:
 			wvMapRequest.ResponseChan <- WorldViewMap
-		case wv := <- SetWorldViewMap:
+		case wv := <-ChSetWorldViewMap:
 			WorldViewMap[wv.Id] = wv
 			peers.PeerToUpdate <- wv.PeerList
-			time.Sleep(10 * time.Millisecond)
 		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
 func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_shouldSync chan bool, id string) {
-	go WVServer()
-
 	ID = id
 	MyWorldView.Id = ID
 	InfoElev.ElevID = ID
 	MyWorldView.PeerList.Id = ID
 
+	go wvServer()
+
 	for {
 		wv := <-ch_WVRx //worldview mottatt
 
 		if wv.Id != "" {
-			//WVMapMutex.Lock()
-			//WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
-			SetWorldViewMap <- wv
-			//WVMapMutex.Unlock()
+
+			ChSetWorldViewMap <- wv
 			if wv.Id != ID { //noen andre sendte
-				InfoMapMutex.Lock()
-				InfoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
-				InfoMapMutex.Unlock()
+				responseChan := make(chan WorldView)
+				var request MyWVrequest
+				request.ResponseChan = responseChan
+				ChGetMyWorldView <- request
+				myWV := <-responseChan
+				infoMap := myWV.InfoMap
+				infoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
+
 				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
 				MyWorldView.Timestamp = timer.Get_wall_time()
 				time.Sleep(10 * time.Millisecond)
@@ -134,16 +136,17 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 
 // Comparing info from the different peers to check if we can update the cyclic counters
 func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
-	InfoMapMutex.Lock()
+	infoMap := GetMyWorldView().InfoMap
+
 	wasTimedOut := wasTimedOut()
-	if len(InfoMap) != 0 {
+	if len(infoMap) != 0 {
 
 		//Comparing hallrequests
 		for i := 0; i < elev.N_FLOORS; i++ {
 			for j := 0; j < elev.N_BUTTONS-1; j++ {
-				listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+				listOfElev := make([]elev.ConfirmationState, len(infoMap))
 				k := 0
-				for _, elev := range InfoMap {
+				for _, elev := range infoMap {
 					if elev.HallRequests == nil {
 						return
 					}
@@ -152,30 +155,29 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 				}
 				update := elev.CyclicUpdate(listOfElev, wasTimedOut)
 
-				if _, ok := InfoMap[ID]; ok {
-					InfoMap[ID].HallRequests[i][j] = update
+				if _, ok := infoMap[ID]; ok {
+					infoMap[ID].HallRequests[i][j] = update
 				}
 			}
 		}
 
 		// Comparing the Locked-attribute
-		listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+		listOfElev := make([]elev.ConfirmationState, len(infoMap))
 		k := 0
-		for _, elev := range InfoMap {
+		for _, elev := range infoMap {
 			listOfElev[k] = elev.Locked
 			k++
 		}
 		update := elev.CyclicUpdate(listOfElev, wasTimedOut)
 
 		InfoElev.Locked = update
-		InfoMap[ID] = InfoElev
+		infoMap[ID] = InfoElev
 
 	}
 	select {
-	case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
+	case ch_syncRequestsSingleElev <- infoMap[ID].HallRequests:
 	default:
 	}
-	InfoMapMutex.Unlock()
 }
 
 // henter status fra heisen og sender på channel som en informationElev-variabel
@@ -190,17 +192,12 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 		}
 		if ID != "" {
 			InfoElev.ElevID = ID
-			InfoMapMutex.Lock()
-			InfoMap[ID] = InfoElev
-			InfoMapMutex.Unlock()
-			MyWorldView.InfoMap = InfoMap
-			//WVMapMutex.Lock()
-			SetWorldViewMap <- MyWorldView
-			//WorldViewMap[ID] = MyWorldView
-			//WVMapMutex.Unlock()
+
+			ChSetMyWorldView <- InfoElev
+			ChSetWorldViewMap <- GetMyWorldView()
 
 			select {
-			case ch_WVTx <- MyWorldView:
+			case ch_WVTx <- GetMyWorldView():
 			default:
 				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
 			}
@@ -213,19 +210,35 @@ func wasTimedOut() bool {
 	var timeOut float64 = 1.0
 	var keyList []string
 	var maxDiff float64 = 0
-	//MÅ HA EN MUTEX HER, men koden kræsjer
-	//WVMapMutex.Lock()
-	for key, _ := range WorldViewMap {
+	wvMap := GetWorldViewMap()
+	for key, _ := range wvMap {
 		keyList = append(keyList, key)
 	}
-	//WVMapMutex.Unlock()
 	for i := 0; i < len(keyList)-1; i++ {
-		//WVMapMutex.Lock()
-		Diff := math.Abs(WorldViewMap[keyList[i]].Timestamp - WorldViewMap[keyList[i+1]].Timestamp)
-		//WVMapMutex.Unlock()
+		Diff := math.Abs(wvMap[keyList[i]].Timestamp - wvMap[keyList[i+1]].Timestamp)
 		if Diff > maxDiff {
 			maxDiff = Diff
 		}
 	}
 	return maxDiff > timeOut
+}
+
+// returns the current local worldView via the vwServer
+func GetMyWorldView() WorldView {
+	responseChan := make(chan WorldView)
+	var request MyWVrequest
+	request.ResponseChan = responseChan
+	ChGetMyWorldView <- request
+	myWV := <-responseChan
+	return myWV
+}
+
+// returns the current worldView-map via the vwServer
+func GetWorldViewMap() map[string]WorldView {
+	responseChan := make(chan map[string]WorldView)
+	var request WVMapRequest
+	request.ResponseChan = responseChan
+	ChGetWorldViewMap <- request
+	myWV := <-responseChan
+	return myWV
 }

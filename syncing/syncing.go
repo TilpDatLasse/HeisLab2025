@@ -27,13 +27,12 @@ func SyncingMain(syncChans SyncChans) {
 
 		} else { //syncRequest == false, sync completed
 			fmt.Println("Sync done!!")
-			worldview.InfoMapMutex.Lock()
+
 			select {
-			case syncChans.InformationElevFromSync <- worldview.InfoMap:
+			case syncChans.InformationElevFromSync <- worldview.GetMyWorldView().InfoMap:
 			default:
 				fmt.Println("Warning: message not sent to HRA (channel full)")
 			}
-			worldview.InfoMapMutex.Unlock()
 
 			worldview.ShouldSync = false
 			worldview.InfoElev.Locked = 0
@@ -47,13 +46,9 @@ func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.Confirmati
 		worldview.CompareAndUpdateInfoMap(SyncRequestsSingleElev)
 		//worldview.WVMapMutex.Unlock()
 		//worldview.WVMapMutex.Lock()
-		responseChan := make(chan map[string]worldview.WorldView)
-		var request worldview.WVMapRequest
-		request.ResponseChan = responseChan
-		
-		worldview.GetWorldViewMap <- request
-		wv := <- responseChan
-		if AllWorldViewsEqual(wv) {
+
+		wvMap := worldview.GetWorldViewMap()
+		if AllWorldViewsEqual(wvMap) {
 			go syncDone(ShouldSync)
 			break
 		}
