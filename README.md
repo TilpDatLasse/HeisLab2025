@@ -30,7 +30,7 @@ network: Responsible for all udp communication between peers. Information transm
 
 syncing: Ensures synchronization of elevator state data across all peers in the peer-to-peer network. 
 
-worldview:
+worldview: Manages the shared worldview across all peers.
 
 How to run the program:
 -----------------------
