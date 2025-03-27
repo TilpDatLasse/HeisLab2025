@@ -11,6 +11,12 @@ import (
 
 var SyncRequest = false
 
+type SyncChans struct {
+	ShouldSync              chan bool
+	InformationElevFromSync chan map[string]worldview.InformationElev
+	SyncRequestSingleElev   chan [][2]elev.ConfirmationState
+}
+
 func SyncingMain(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
 		SyncRequest = <-ch_shouldSync
