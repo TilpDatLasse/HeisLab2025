@@ -1,6 +1,7 @@
 package peers
 
 import (
+	"fmt"
 	"sort"
 	"time"
 )
@@ -9,7 +10,7 @@ type PeerUpdate struct {
 	Peers []string
 	New   string
 	Lost  []string
-	Id    string //mulig dette ikke går
+	Id    string
 }
 
 const (
@@ -62,4 +63,11 @@ func UpdatePeers() {
 			PeerFromUpdate <- p
 		}
 	}
+}
+
+func PrintPeerUpdate(p PeerUpdate) {
+	fmt.Printf("Peer update:\n")
+	fmt.Printf("  Peers:    %q\n", p.Peers)
+	fmt.Printf("  New:      %q\n", p.New)
+	fmt.Printf("  Lost:     %q\n", p.Lost)
 }

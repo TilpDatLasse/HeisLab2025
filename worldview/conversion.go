@@ -4,7 +4,7 @@ import (
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 )
 
-// Converting an elev.Elevator-variabel to an InformationElev-variabel
+// Converting an elev.Elevator-variable to an InformationElev-variable
 func Converter(e elev.Elevator) InformationElev {
 	rawInput := e
 	hallRequests := make([][2]elev.ConfirmationState, len(rawInput.Requests))
