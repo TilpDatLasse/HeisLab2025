@@ -58,7 +58,7 @@ func main() {
 	go HRA.HRAMain(SingElevChans.Single_elev_queue, SyncChans.ShouldSync, SyncChans.InformationElevFromSync, id)
 	go worldview.SetElevatorStatus(WorldViewChans.WorldViewTxChan)
 	go worldview.WorldViewMain(WorldViewChans.WorldViewRxChan, SyncChans.SyncRequestSingleElev, SyncChans.ShouldSync, id)
-	go syncing.SyncingMain(ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev)
+	go syncing.SyncingMain(SyncChans)
 
 	select {}
 
