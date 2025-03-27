@@ -21,7 +21,7 @@ Modules
 The system consists of several modules, responsible for different operations within the program. 
 Here is a short list of each module and their responsabilities:
 
-#elev_algo#: Runs a single assigned elevator over TCP communication. Responsible for a finite state machine of the elevator and bulletproof excecution of elevator movements and user input and output.
+elev_algo: Runs a single assigned elevator over TCP communication. Responsible for a finite state machine of the elevator and bulletproof excecution of elevator movements and user input and output.
 
 HRA (Hall Request Assigner): Decides which elevator should serve a hall order when multiple elevators are online.
 
