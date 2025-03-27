@@ -96,7 +96,7 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 
 // Comparing info from the different peers to check if we can update the cyclic counters
 func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
-	InfoMapMutex.Lock() // Lås mutex før lesing og skriving til InfoMap
+	InfoMapMutex.Lock() 
 	wasTimedOut := wasTimedOut()
 	if len(InfoMap) != 0 {
 
@@ -141,6 +141,7 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 }
 
 // henter status fra heisen og sender på channel som en informationElev-variabel
+// Getting the status of the local elevator and sending on wv-channel
 func SetElevatorStatus(ch_WVTx chan WorldView) {
 	for {
 		if InfoElev.Locked == 0 { //hvis ikke låst
@@ -236,7 +237,7 @@ func wasTimedOut() bool {
 	var timeOut float64 = 1.0
 	var keyList []string
 	var maxDiff float64 = 0
-	//MÅ HA EN MUTEX HER
+	//MÅ HA EN MUTEX HER, men koden kræsjer
 	//WVMapMutex.Lock()
 	for key, _ := range WorldViewMap {
 		keyList = append(keyList, key)
@@ -250,7 +251,5 @@ func wasTimedOut() bool {
 			maxDiff = Diff
 		}
 	}
-
-	//fmt.Println("WASTIMEDOUT: ", maxDiff)
 	return maxDiff > timeOut
 }
