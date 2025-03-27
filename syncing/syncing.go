@@ -9,7 +9,7 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
-var SyncRequest = false
+//var SyncRequest = false
 
 type SyncChans struct {
 	ShouldSync              chan bool
@@ -20,45 +20,49 @@ type SyncChans struct {
 func SyncingMain(syncChans SyncChans, getMyWorldView chan worldview.MyWVrequest, getWorldViewMap chan worldview.WVMapRequest) {
 
 	for {
-		SyncRequest = <-syncChans.ShouldSync
-		if SyncRequest { //syncRequest == true, request of synching recieved from HRA or other peer
-			worldview.ShouldSync = true
-			Sync(syncChans.ShouldSync, syncChans.SyncRequestSingleElev, getMyWorldView, getWorldViewMap)
+		SyncRequest := <-syncChans.ShouldSync
+		if SyncRequest { //syncRequest == true, request of synching recieved from HRA
+			//worldview.ShouldSync = true
+			worldview.InfoElev.Locked = 1
+			Sync(syncChans, getMyWorldView, getWorldViewMap)
 
-		} else { //syncRequest == false, sync completed
-			fmt.Println("Sync done!!")
+		} //else { //syncRequest == false, sync completed
+		// fmt.Println("Sync done!!")
 
-			select {
-			case syncChans.InformationElevFromSync <- worldview.GetMyWorldView(getMyWorldView).InfoMap:
-			default:
-				fmt.Println("Warning: message not sent to HRA (channel full)")
-			}
+		// select {
+		// case syncChans.InformationElevFromSync <- worldview.GetMyWorldView(getMyWorldView).InfoMap:
+		// default:
+		// 	fmt.Println("Warning: message not sent to HRA (channel full)")
+		// }
 
-			worldview.ShouldSync = false
-			worldview.InfoElev.Locked = 0
-		}
+		//worldview.ShouldSync = false
+		// worldview.InfoElev.Locked = 0
+		// }
 	}
 }
 
-func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.ConfirmationState, getMyWorldView chan worldview.MyWVrequest, getWorldViewMap chan worldview.WVMapRequest) {
+func Sync(syncChans SyncChans, getMyWorldView chan worldview.MyWVrequest, getWorldViewMap chan worldview.WVMapRequest) {
 	for {
 		//worldview.WVMapMutex.Lock()
-		worldview.CompareAndUpdateInfoMap(SyncRequestsSingleElev, getMyWorldView, getWorldViewMap)
+		worldview.CompareAndUpdateInfoMap(syncChans.SyncRequestSingleElev, getMyWorldView, getWorldViewMap)
 		//worldview.WVMapMutex.Unlock()
 		//worldview.WVMapMutex.Lock()
 
 		wvMap := worldview.GetWorldViewMap(getWorldViewMap)
 		if AllWorldViewsEqual(wvMap) {
-			go syncDone(ShouldSync)
+			syncChans.InformationElevFromSync <- worldview.GetMyWorldView(getMyWorldView).InfoMap
+			//go syncDone(ShouldSync)
+			fmt.Println("Sync done!!")
+			worldview.InfoElev.Locked = 0
 			break
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
 }
 
-func syncDone(ShouldSync chan bool) {
-	ShouldSync <- false
-}
+// func syncDone(ShouldSync chan bool) {
+// 	ShouldSync <- false
+// }
 
 // Compares the worldviews of all peers
 func AllWorldViewsEqual(worldViewMap map[string]worldview.WorldView) bool {

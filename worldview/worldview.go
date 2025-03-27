@@ -18,9 +18,9 @@ var (
 )
 
 var (
-	ID         string
-	ShouldSync bool = false
-	InfoElev   InformationElev
+	ID string
+	//ShouldSync bool = false
+	InfoElev InformationElev
 )
 
 var (
@@ -124,13 +124,13 @@ func WorldViewMain(wvServerChans WVServerChans, ch_WVRx chan WorldView, ch_syncR
 				time.Sleep(10 * time.Millisecond)
 
 				//denne er egt ikke nødvendig, alle synker hele tiden uansett
-				if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
-					select {
-					case ch_shouldSync <- true:
-					default:
-					}
+				// if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
+				// 	select {
+				// 	case ch_shouldSync <- true:
+				// 	default:
+				// 	}
 
-				}
+				// }
 			}
 		}
 	}
@@ -186,12 +186,12 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 // Getting the status of the local elevator and sending on wv-channel
 func SetElevatorStatus(ch_WVTx chan WorldView, wvServerChans WVServerChans) {
 	for {
-		infoE := Converter(fsm.FetchElevatorStatus())
+		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
 		if InfoElev.Locked == 0 { //hvis ikke låst
 			InfoElev = Converter(fsm.FetchElevatorStatus())
-			if ShouldSync {
-				InfoElev.Locked = 1
-			}
+			// if ShouldSync {
+			// 	InfoElev.Locked = 1
+			// }
 		}
 		if ID != "" {
 			InfoElev.ElevID = ID
@@ -199,8 +199,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView, wvServerChans WVServerChans) {
 			wvServerChans.SetMyWorldView <- InfoElev
 
 			wvServerChans.SetWorldViewMap <- GetMyWorldView(wvServerChans.GetMyWorldView)
-			if infoE.MotorStop {
-				fmt.Println("motorstop WV = ", infoE.MotorStop)
+			if hasMotorStopped {
 				continue
 			}
 			select {
