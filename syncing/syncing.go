@@ -40,6 +40,7 @@ func SyncingMain(ch SyncChans) {
 	}
 }
 
+
 func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
 		worldview.WVMapMutex.Lock()
