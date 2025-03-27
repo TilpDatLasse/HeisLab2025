@@ -48,7 +48,7 @@ func main() {
 
 	flag.Parse()
 
-	go elev_algo.ElevMain(SingElevChans, SyncChans.SyncRequestSingleElev, simPort)
+	go elev_algo.ElevMain(SingElevChans, SyncChans.SyncRequestSingleElev, simPort, id)
 
 	// Sleep when initializing to make sure the elevator is ready
 	time.Sleep(3 * time.Second)

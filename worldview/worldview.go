@@ -133,11 +133,12 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 		InfoElev.Locked = update
 		InfoMapMutex.Lock()
 		InfoMap[ID] = InfoElev
+		infoMap[ID] = InfoElev
 		InfoMapMutex.Unlock()
 
 	}
 	select {
-	case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
+	case ch_syncRequestsSingleElev <- infoMap[ID].HallRequests:
 	default:
 	}
 }
