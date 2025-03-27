@@ -1,7 +1,7 @@
 Network module 
 ==========================================
 
-Network module responsible for UDP communication between the peers. The module is modified from handout code for the project found [here](https://github.com/TTK4145/Network-go.git).
+The network module is responsible for UDP communication between the peers. The module is imported and modified from handout code for the project found [here](https://github.com/TTK4145/Network-go.git).
 
 Channel-in/channel-out pairs of (almost) any custom or built-in data type can be supplied to a pair of transmitter/receiver functions. 
 Data sent to the transmitter function is automatically serialized and broadcast on the specified port. 
