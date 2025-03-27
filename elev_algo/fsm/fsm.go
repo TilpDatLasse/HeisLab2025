@@ -13,7 +13,6 @@ var elevator elev.Elevator
 var outputDevice elev.ElevatorOutputDevice
 
 func FsmInit() {
-	elevator = elev.Elevator{}
 	elevator.Config.DoorOpenDurationS = 3.0
 	elevator.Config.ClearRequestVariant = elev.CV_InDirn
 	outputDevice = elev.Elevio_getOutputDevice()

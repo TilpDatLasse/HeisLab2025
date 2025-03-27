@@ -289,7 +289,7 @@ func toBool(a byte) bool {
 
 // Update the order confirmationstates
 func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState {
-	isPresent := map[ConfirmationState]bool{} // which stores the presence of each state
+	isPresent := map[ConfirmationState]bool{} // stores the presence of each state
 	for _, v := range list {
 		isPresent[v] = true
 	}
@@ -301,13 +301,13 @@ func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState 
 
 		return registered
 	case isPresent[registered] && isPresent[no_call]: // Order is served. No order should be returned
-		if wasTimedOut { //checks who has the newest information in case of severe packetloss og network disconnect
+		if wasTimedOut { //checks if the information may be outdated in case of severe packetloss og network disconnect
 			return registered
 		} else {
 			return no_call
 		}
 
-	case isPresent[no_call] && isPresent[unregistered]: // Some peers has a new order. Every peer should then get the order
+	case isPresent[no_call] && isPresent[unregistered]: // Some peer has a new order. Every peer should then get the order
 		return unregistered
 
 	case !isPresent[unregistered] && !isPresent[registered]:
