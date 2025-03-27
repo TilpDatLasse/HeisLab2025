@@ -8,4 +8,4 @@ Data sent to the transmitter function is automatically serialized and broadcast 
 Any messages received on the receiver's port are de-serialized (as long as they match any of the receiver's supplied channel data types) and sent on the corresponding channel. 
 See bcast.Transmitter and bcast.Receiver.
 
-Peers on the local network can be detected by supplying your own ID to a transmitter and receiving peer updates (new, current, and lost peers) from the receiver. See [bcast.Transmitter and bcast.Receiver](network/bcast/bcast.go).
+Peers on the local network can be detected by supplying your own ID to a transmitter and receiving peer updates (new, current, and lost peers) from the receiver. See [bcast.Transmitter and bcast.Receiver](bcast/bcast.go).
