@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/TilpDatLasse/HeisLab2025/syncing"
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
@@ -29,9 +28,9 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 
 		time.Sleep(1000 * time.Millisecond)
 
-		if !syncing.SyncRequest {
-			ch_shouldSync <- true //Sending a request to sync
-		}
+		//if !syncing.SyncRequest {
+		ch_shouldSync <- true //Sending a request to sync
+		//}
 
 		infoMap := <-ch_fromSync //Waiting for syncing to complete
 
