@@ -12,8 +12,7 @@ Features
 ✔ Peer-to-peer communication for distributed elevator control  
 ✔ Fault-tolerant design that handles network failures  
 ✔ Hall Request Assigner (HRA) for efficient order distribution  
-✔ Supports both a physical and simulated elevator  
-✔ Uses UDP for inter-peer communication and TCP for elevator control 
+✔ UDP for inter-peer communication and TCP for elevator control 
 
 
 Modules

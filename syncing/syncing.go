@@ -1,7 +1,6 @@
 package syncing
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 
@@ -18,47 +17,26 @@ type SyncChans struct {
 }
 
 func SyncingMain(syncChans SyncChans) {
-
 	for {
-		SyncRequest = <-syncChans.ShouldSync
-		if SyncRequest { //syncRequest == true, request of synching recieved from HRA or other peer
-			worldview.ShouldSync = true
-			Sync(syncChans.ShouldSync, syncChans.SyncRequestSingleElev)
-			fmt.Println("sted 3")
-
-		} else { //syncRequest == false, sync completed
-			fmt.Println("Sync done!!")
-			worldview.InfoMapMutex.Lock()
-			select {
-			case syncChans.InformationElevFromSync <- worldview.InfoMap:
-				fmt.Println("sted 2")
-			default:
-				fmt.Println("Warning: message not sent to HRA (channel full)")
-			}
-			worldview.InfoMapMutex.Unlock()
-			fmt.Println("sted 1")
-			worldview.ShouldSync = false
-			worldview.InfoElev.Locked = 0
-		}
+		worldview.ShouldSync = <-syncChans.ShouldSync
+		Sync(syncChans)
 	}
 }
 
-func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.ConfirmationState) {
+func Sync(syncChans SyncChans) {
 	for {
-		worldview.CompareAndUpdateInfoMap(SyncRequestsSingleElev)
+		worldview.CompareAndUpdateInfoMap(syncChans.SyncRequestSingleElev)
 		worldview.WVMapMutex.Lock()
 		WVMapCopy := worldview.DeepCopyWVMap(worldview.WorldViewMap)
 		worldview.WVMapMutex.Unlock()
 		if AllWorldViewsEqual(WVMapCopy) {
-			go syncDone(ShouldSync)
+			syncChans.InformationElevFromSync <- WVMapCopy[worldview.ID].InfoMap
+			worldview.ShouldSync = false
+			worldview.InfoElev.Locked = 0
 			break
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-}
-
-func syncDone(ShouldSync chan bool) {
-	ShouldSync <- false
 }
 
 // Compares the worldviews of all peers

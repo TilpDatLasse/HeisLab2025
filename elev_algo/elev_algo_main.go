@@ -17,11 +17,9 @@ type SingleElevatorChans struct {
 	SingleElevQueue chan [][2]bool
 }
 
-func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, simPort string) {
+func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, simPort string, id string) {
 	elev.Init("localhost:"+simPort, elev.N_FLOORS)
-
-	fsm.FsmInit()
-
+	fsm.FsmInit(id)
 	input := elev.Elevio_getInputDevice()
 
 	if input.FloorSensor() == -1 {
@@ -40,6 +38,7 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 		select {
 		case a := <-ch.DrvButtons:
 			fsm.FsmOnRequestButtonPress(a.Floor, int(a.Button))
+			fsm.SaveCabOrders()
 
 		case a := <-ch.DrvFloors:
 			fsm.FsmOnFloorArrival(a)

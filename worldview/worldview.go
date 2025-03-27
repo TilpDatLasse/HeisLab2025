@@ -85,15 +85,6 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
 				MyWorldView.Timestamp = timer.Get_wall_time()
 				time.Sleep(10 * time.Millisecond)
-
-				//denne er egt ikke nødvendig, alle synker hele tiden uansett
-				if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
-					select {
-					case ch_shouldSync <- true:
-					default:
-					}
-
-				}
 			}
 		}
 	}
@@ -142,11 +133,12 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 		InfoElev.Locked = update
 		InfoMapMutex.Lock()
 		InfoMap[ID] = InfoElev
+		infoMap[ID] = InfoElev
 		InfoMapMutex.Unlock()
 
 	}
 	select {
-	case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
+	case ch_syncRequestsSingleElev <- infoMap[ID].HallRequests:
 	default:
 	}
 }
