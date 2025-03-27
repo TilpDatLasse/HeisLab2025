@@ -24,7 +24,7 @@ Here is a short list of each modules responsibilities:
 
 elev_algo: Runs a single assigned elevator over TCP communication. Responsible for finite state machine of the elevator and bulletproof excecution of elevatormovements and user input and output.
 
-HRA: Is the Hall request assigner module, which controls which of the online elevators that should serve a hallorder when multiple elevators are online.
+HRA (Hall Request Assigner): Decides which elevator should serve a hall order when multiple elevators are online.
 
 network: Responsible for all udp communication between peers. Information transmitting and receiving are both done in this module.
 
