@@ -24,7 +24,7 @@ The elevator algorithm is based on preferring to continue in the direction of tr
 The implementations of these three functions are found in [requests.c](requests.c).
 
 Implementation notes
-====================
+----
 
 The standard disclaimer of "some parts of this were written in less than 10 minutes" applies.
 
