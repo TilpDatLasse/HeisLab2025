@@ -86,3 +86,25 @@ Når skrives og itereres det over Infomap?
 - nettverk linje 105 delete
 - masse i HRA
 */
+
+func deepCopyWV(original WorldView) WorldView {
+	copyMap := make(map[string]InformationElev)
+    for key, value := range original.InfoMap {
+        copyMap[key] = value
+    }
+	copy := WorldView{
+		InfoMap: copyMap,
+		Id :       original.Id,
+		Timestamp: original.Timestamp,
+		PeerList:  original.PeerList,
+		}
+	return copy
+}
+
+func deepCopyWVMap(original map[string]WorldView) map[string]WorldView {
+	copy := make(map[string]WorldView)
+	for key, value := range original {
+        copy[key] = deepCopyWV(value)
+    }
+	return copy
+}
