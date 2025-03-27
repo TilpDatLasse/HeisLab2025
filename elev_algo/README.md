@@ -1,6 +1,20 @@
 Elev_algo Module
 ================
-The elevator algorithm module controls a single elevator over TCP, managing movement, state transitions, and user input. It contains contains code imported from (https://github.com/TTK4145/driver-go.git).
+The elevator algorithm module controls a single elevator over TCP, managing movement, state transitions, and user input. It comprises the submodules elevator_io, fsm, requests and timer.
+
+Finite State Machine (FSM)
+-------------
+
+Requests
+-----
+
+Timer
+-----
+
+Elevator_io
+----------
+
+It contains contains code imported from (https://github.com/TTK4145/driver-go.git).
 
 The basic elevator algorithm
 -------------
