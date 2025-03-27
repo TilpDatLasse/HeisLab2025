@@ -11,6 +11,7 @@ import (
 
 var elevator elev.Elevator
 var outputDevice elev.ElevatorOutputDevice
+var motorTimeoutStarted float64 = timer.Get_wall_time()
 
 func FsmInit() {
 	elevator.Config.DoorOpenDurationS = 3.0
@@ -20,6 +21,7 @@ func FsmInit() {
 	elevator.Dirn = 0
 	elevator.State = elev.IDLE
 	elevator.Obs = false
+	elevator.MotorStop = false
 }
 
 func FsmOnInitBetweenFloors() {
@@ -75,6 +77,7 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 }
 
 func FsmOnFloorArrival(newFloor int) {
+	motorTimeoutStarted = timer.Get_wall_time()
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)
 
@@ -151,19 +154,19 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) {
 
 func MotorTimeout() {
 	var prevState elev.State = elev.IDLE
-	timeout_time := 12.0
-	var time_started float64 = 0.0
+	timeoutTime := 4.0
 	for {
 		if (elevator.State == elev.MOVE) && (elevator.State != prevState) {
-			time_started = timer.Get_wall_time()
+			motorTimeoutStarted = timer.Get_wall_time()
 
 		}
 		// Checks if the elevator has been moving for too long without reaching its destination
-		if (elevator.State == elev.MOVE) && (prevState == elev.MOVE) && ((time_started + timeout_time) < timer.Get_wall_time()) {
+		if (elevator.State == elev.MOVE) && (prevState == elev.MOVE) && ((motorTimeoutStarted + timeoutTime) < timer.Get_wall_time()) {
 			fmt.Println("---------------------Motor timeout----------------------------")
+			elevator.MotorStop = true
 			RestartElevator()
-
-			time_started = timer.Get_wall_time()
+			go ifPowerloss()
+			motorTimeoutStarted = timer.Get_wall_time()
 		}
 
 		prevState = elevator.State
@@ -176,10 +179,24 @@ func MotorTimeout() {
 
 func RestartElevator() { // må vel egt implementere at den sier ifra at den ikke er tilgjengelig
 	outputDevice.MotorDirection(elev.MD_Stop)
-	for i := 0; i < 300; i++ {
+	for i := 0; i < 800; i++ {
 		time.Sleep(10 * time.Millisecond)
 		outputDevice.MotorDirection(elev.MD_Stop)
 	}
 	elevator.State = elev.IDLE
 
+}
+
+func ifPowerloss() {
+
+	for elevator.MotorStop {
+		if elev.GetFloor() == -1 {
+			FsmOnInitBetweenFloors()
+		} else {
+			FsmInit()
+			motorTimeoutStarted = timer.Get_wall_time()
+		}
+		fmt.Println("motorstop = ", elevator.MotorStop)
+		time.Sleep(2 * time.Second)
+	}
 }

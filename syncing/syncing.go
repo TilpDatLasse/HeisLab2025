@@ -17,19 +17,19 @@ type SyncChans struct {
 	SyncRequestSingleElev   chan [][2]elev.ConfirmationState
 }
 
-func SyncingMain(syncChans SyncChans) {
+func SyncingMain(syncChans SyncChans, getMyWorldView chan worldview.MyWVrequest, getWorldViewMap chan worldview.WVMapRequest) {
 
 	for {
 		SyncRequest = <-syncChans.ShouldSync
 		if SyncRequest { //syncRequest == true, request of synching recieved from HRA or other peer
 			worldview.ShouldSync = true
-			Sync(syncChans.ShouldSync, syncChans.SyncRequestSingleElev)
+			Sync(syncChans.ShouldSync, syncChans.SyncRequestSingleElev, getMyWorldView, getWorldViewMap)
 
 		} else { //syncRequest == false, sync completed
 			fmt.Println("Sync done!!")
 
 			select {
-			case syncChans.InformationElevFromSync <- worldview.GetMyWorldView().InfoMap:
+			case syncChans.InformationElevFromSync <- worldview.GetMyWorldView(getMyWorldView).InfoMap:
 			default:
 				fmt.Println("Warning: message not sent to HRA (channel full)")
 			}
@@ -40,14 +40,14 @@ func SyncingMain(syncChans SyncChans) {
 	}
 }
 
-func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.ConfirmationState) {
+func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.ConfirmationState, getMyWorldView chan worldview.MyWVrequest, getWorldViewMap chan worldview.WVMapRequest) {
 	for {
 		//worldview.WVMapMutex.Lock()
-		worldview.CompareAndUpdateInfoMap(SyncRequestsSingleElev)
+		worldview.CompareAndUpdateInfoMap(SyncRequestsSingleElev, getMyWorldView, getWorldViewMap)
 		//worldview.WVMapMutex.Unlock()
 		//worldview.WVMapMutex.Lock()
 
-		wvMap := worldview.GetWorldViewMap()
+		wvMap := worldview.GetWorldViewMap(getWorldViewMap)
 		if AllWorldViewsEqual(wvMap) {
 			go syncDone(ShouldSync)
 			break

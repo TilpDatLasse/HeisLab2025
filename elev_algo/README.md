@@ -1,9 +1,13 @@
 Elev_algo Module
 ================
-The elevator algorithm module controls a single elevator over TCP, managing movement, state transitions, and user input. It comprises the submodules elevator_io, fsm, requests and timer.
+The elevator algorithm module controls a single elevator over TCP, managing movement, state transitions, and user input. It comprises four submodules: elevator_io, fsm, requests and timer. 
+
+The elevator algorithm is based on preferring to continue in the direction of travel, as long as there are any requests in that direction. 
+We implement thhis with three functions, ChooseDirection, ShouldStop and ClearAtCurrentFloor in [requests.go](requests/requests.go).
 
 Finite State Machine (FSM)
 -------------
+The FSM manages the elevator's state transitions between Idle, Moving, and DoorOpen. It ensures that the elevator moves when there are active requests, stops when necessary and the door opens and closes appropriately.
 
 Requests
 -----
@@ -15,7 +19,8 @@ Timer
 Elevator_io
 ----------
 
-Contains contains code imported from (https://github.com/TTK4145/driver-go.git).
+This module interfaces with hardware to send movement commands, read floor sensors, and detect button presses. It is based on code from the [driver-go] (https://github.com/TTK4145/driver-go.git) repository.
+
 
 The basic elevator algorithm
 -------------

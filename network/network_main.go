@@ -14,7 +14,7 @@ func RecieveWV(ch_WVRx chan wv.WorldView, udpWVPort int) {
 	b.Receiver(udpWVPort, ch_WVRx)
 }
 
-func NetworkMain(id string, wvChans wv.WVChans, udpWVPort int) {
+func NetworkMain(id string, wvChans wv.WVUDPChans, udpWVPort int) {
 
 	go RecieveWV(wvChans.WorldViewRxChan, udpWVPort)
 	go BroadcastWV(wvChans.WorldViewTxChan, udpWVPort)

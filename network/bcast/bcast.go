@@ -31,7 +31,7 @@ func Transmitter(port int, chans ...interface{}) {
 	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
 	for {
 		chosen, value, _ := reflect.Select(selectCases)
-		jsonstr, _ := json.Marshal(value.Interface())
+		jsonstr, _ := json.Marshal(value.Interface()) //Gir feilmelding
 		ttj, _ := json.Marshal(typeTaggedJSON{
 			TypeId: typeNames[chosen],
 			JSON:   jsonstr,

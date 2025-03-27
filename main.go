@@ -31,9 +31,16 @@ func main() {
 		SingleElevQueue: make(chan [][2]bool),
 	}
 
-	WorldViewChans := worldview.WVChans{
+	WorldViewChansUDP := worldview.WVUDPChans{
 		WorldViewTxChan: make(chan worldview.WorldView),
 		WorldViewRxChan: make(chan worldview.WorldView),
+	}
+
+	WorldViewServerChans := worldview.WVServerChans{
+		GetMyWorldView:  make(chan worldview.MyWVrequest),
+		SetMyWorldView:  make(chan worldview.InformationElev),
+		GetWorldViewMap: make(chan worldview.WVMapRequest),
+		SetWorldViewMap: make(chan worldview.WorldView),
 	}
 
 	SyncChans := syncing.SyncChans{
@@ -53,11 +60,11 @@ func main() {
 	// Sleep when initializing to make sure the elevator is ready
 	time.Sleep(3 * time.Second)
 
-	go network.NetworkMain(id, WorldViewChans, udpWVPort)
+	go network.NetworkMain(id, WorldViewChansUDP, udpWVPort)
 	go HRA.HRAMain(SingElevChans.SingleElevQueue, SyncChans.ShouldSync, SyncChans.InformationElevFromSync, id)
-	go worldview.SetElevatorStatus(WorldViewChans.WorldViewTxChan)
-	go worldview.WorldViewMain(WorldViewChans.WorldViewRxChan, SyncChans.SyncRequestSingleElev, SyncChans.ShouldSync, id)
-	go syncing.SyncingMain(SyncChans)
+	go worldview.SetElevatorStatus(WorldViewChansUDP.WorldViewTxChan, WorldViewServerChans)
+	go worldview.WorldViewMain(WorldViewServerChans, WorldViewChansUDP.WorldViewRxChan, SyncChans.SyncRequestSingleElev, SyncChans.ShouldSync, id)
+	go syncing.SyncingMain(SyncChans, WorldViewServerChans.GetMyWorldView, WorldViewServerChans.GetWorldViewMap)
 
 	select {}
 
