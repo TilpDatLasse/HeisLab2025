@@ -37,6 +37,13 @@ type WVChans struct {
 	WorldViewRxChan chan WorldView
 }
 
+var GetWorldView = make(chan request)
+var SetWorldView = make(chan WorldView)
+
+type request struct {
+	responseChan chan interface{}
+}
+
 type WorldView struct {
 	InfoMap   map[string]InformationElev
 	Id        string
@@ -63,7 +70,21 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
+func WVServer(GetWorldView chan request) { // ha channel som input?
+	for {
+		select{
+		case wvRequest:= <- GetWorldView:
+			wvRequest.responseChan <- MyWorldView
+		case wv:= <- SetWorldView:
+			WorldViewMap[wv.Id] = wv
+			peers.PeerToUpdate <- wv.PeerList
+		}
+	}
+}
+
 func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_shouldSync chan bool, id string) {
+	go WVServer(GetWorldView)
+
 	ID = id
 	MyWorldView.Id = ID
 	InfoElev.ElevID = ID
@@ -73,10 +94,10 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 		wv := <-ch_WVRx //worldview mottatt
 
 		if wv.Id != "" {
-			WVMapMutex.Lock()
-			WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
-			peers.PeerToUpdate <- wv.PeerList
-			WVMapMutex.Unlock()
+			//WVMapMutex.Lock()
+			//WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
+			SetWorldView <- wv
+			//WVMapMutex.Unlock()
 			if wv.Id != ID { //noen andre sendte
 				InfoMapMutex.Lock()
 				InfoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
@@ -160,9 +181,10 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 			InfoMap[ID] = InfoElev
 			InfoMapMutex.Unlock()
 			MyWorldView.InfoMap = InfoMap
-			WVMapMutex.Lock()
-			WorldViewMap[ID] = MyWorldView
-			WVMapMutex.Unlock()
+			//WVMapMutex.Lock()
+			SetWorldView <- MyWorldView
+			//WorldViewMap[ID] = MyWorldView
+			//WVMapMutex.Unlock()
 
 			select {
 			case ch_WVTx <- MyWorldView:

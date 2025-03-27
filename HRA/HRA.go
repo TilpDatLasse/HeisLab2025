@@ -7,22 +7,10 @@ import (
 	"runtime"
 	"time"
 
-	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/syncing"
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
-// type HRAElevState struct {
-// 	Behavior    string `json:"behaviour"`
-// 	Floor       int    `json:"floor"`
-// 	Direction   string `json:"direction"`
-// 	CabRequests []bool `json:"cabRequests"`
-// }
-
-// type HRAInput struct {
-// 	HallRequests [][2]bool               `json:"hallRequests"`
-// 	States       map[string]HRAElevState `json:"states"`
-// }
 
 func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ID string) {
 
@@ -54,7 +42,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 		for key := range infoMap {
 			elevstate := infoMap[key].State
 			input.States[key] = elevstate
-			input.HallRequests = hallToBool(infoMap[key].HallRequests) //koverterer fra confirmationstate til bool
+			input.HallRequests = worldview.HallToBool(infoMap[key].HallRequests) //koverterer fra confirmationstate til bool
 		}
 
 		if len(infoMap) > 0 {
@@ -96,13 +84,4 @@ func sendToElev(output map[string][][2]bool, ch_elevatorQueue chan [][2]bool, ID
 		}
 	}
 
-}
-
-func hallToBool(hallReqList [][2]elev.ConfirmationState) [][2]bool {
-	boolList := make([][2]bool, len(hallReqList))
-	for i, v := range hallReqList {
-		boolList[i][0] = v[0] == 2
-		boolList[i][1] = v[1] == 2
-	}
-	return boolList
 }

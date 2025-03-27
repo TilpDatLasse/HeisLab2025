@@ -66,3 +66,12 @@ func cabToBool(list []elev.ConfirmationState) []bool {
 	}
 	return boolList
 }
+
+func HallToBool(hallReqList [][2]elev.ConfirmationState) [][2]bool {
+	boolList := make([][2]bool, len(hallReqList))
+	for i, v := range hallReqList {
+		boolList[i][0] = v[0] == 2
+		boolList[i][1] = v[1] == 2
+	}
+	return boolList
+}
