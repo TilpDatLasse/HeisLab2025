@@ -1,20 +1,6 @@
 Elev_algo Module
 ================
-Contains code imported from (https://github.com/TTK4145/driver-go.git)
-
-
-
-
-
-
-
-Rationale
-=========
-
-All 5-year cybernetics students should have previously done a smaller elevator project, where the goal was to control a single elevator (with some extra considerations for the stop button). Since not everyone taking this course has done this project, it is only fair to introduce you to the "standard" solution to (the relevant part of) that project. 
-
-As usual, there are no "right" or "wrong" solutions, only solutions that do or do not work. This solution uses a 3-state event-based state machine (States: {Idle, Moving, Door open}, Events: {Button press, Arrive at floor, Timer timed out}). Your design may not, especially when considering that there are three (or more) elevators that need to interact with each other.
-
+The elevator algorithm module controls a single elevator over TCP, managing movement, state transitions, and user input. It contains contains code imported from (https://github.com/TTK4145/driver-go.git).
 
 The basic elevator algorithm
 ============================
@@ -36,19 +22,6 @@ The elevator algorithm is based on preferring to continue in the direction of tr
      - B: Clear the request in the opposite direction if there are no further requests in the direction of travel
      
 The implementations of these three functions are found in [requests.c](requests.c).
-
-
-Running this program
-====================
-
- - Make sure you have cloned this repository recursively, in order to get the c driver code (`git clone --recursive https://github.com/TTK4145/Project-resources.git`)
-   - Alternatively, download the [C driver from this link](https://github.com/TTK4145/driver-c) and place it in the `driver` folder
- - Compile using `make`. Use `make CC=[compiler]` to use a different compiler (eg `make CC=clang-3.6`)
-   - The executable is called `ttk4145demoelevator`
- - Start the elevator server or simulator before starting this demo program
-
-The config file [elevator.con](elevator.con) can be edited to change the behaviour of the elevator. The elevator program must be restarted in order for the saved changes to take effect.
-
 
 Implementation notes
 ====================
