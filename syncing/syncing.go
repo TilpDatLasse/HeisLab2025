@@ -43,11 +43,17 @@ func SyncingMain(syncChans SyncChans) {
 
 func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
-		worldview.WVMapMutex.Lock()
+		//worldview.WVMapMutex.Lock()
 		worldview.CompareAndUpdateInfoMap(SyncRequestsSingleElev)
-		worldview.WVMapMutex.Unlock()
-		worldview.WVMapMutex.Lock()
-		if AllWorldViewsEqual(worldview.WorldViewMap) {
+		//worldview.WVMapMutex.Unlock()
+		//worldview.WVMapMutex.Lock()
+		responseChan := make(chan map[string]worldview.WorldView)
+		var request worldview.WVMapRequest
+		request.ResponseChan = responseChan
+		
+		worldview.GetWorldViewMap <- request
+		wv := <- responseChan
+		if AllWorldViewsEqual(wv) {
 			go syncDone(ShouldSync)
 			break
 		}
@@ -61,7 +67,7 @@ func syncDone(ShouldSync chan bool) {
 
 // Compares the worldviews of all peers
 func AllWorldViewsEqual(worldViewMap map[string]worldview.WorldView) bool {
-	worldview.WVMapMutex.Unlock()
+	//worldview.WVMapMutex.Unlock()
 	var reference worldview.WorldView
 	isFirst := true
 
