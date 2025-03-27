@@ -27,16 +27,44 @@ const (
 	registered   ConfirmationState = 2
 )
 
-// fra elevator
 type State int
 
 const (
 	INIT     State = 0
-	IDLE           = 1
-	MOVE           = 2
-	STOP           = 3
-	DOOROPEN       = 4
+	IDLE     State = 1
+	MOVE     State = 2
+	STOP     State = 3
+	DOOROPEN State = 4
 )
+
+var (
+	_initialized bool = false
+	_numFloors   int  = 4
+	_mtx         sync.Mutex
+	_conn        net.Conn
+	_pollRate    = 20 * time.Millisecond
+)
+
+type MotorDirection int
+
+const (
+	MD_Up   MotorDirection = 1
+	MD_Down MotorDirection = -1
+	MD_Stop MotorDirection = 0
+)
+
+type ButtonType int
+
+const (
+	BT_HallUp   ButtonType = 0
+	BT_HallDown ButtonType = 1
+	BT_Cab      ButtonType = 2
+)
+
+type ButtonEvent struct {
+	Floor  int
+	Button ButtonType
+}
 
 type Elevator struct {
 	Floor       int
@@ -53,7 +81,6 @@ type ElevatorConfig struct {
 	DoorOpenDurationS   float64
 }
 
-// fra elevator_io_device
 type ElevatorInputDevice struct {
 	FloorSensor   func() int
 	RequestButton func(ButtonType, int) bool
@@ -86,35 +113,6 @@ func Elevio_getOutputDevice() ElevatorOutputDevice {
 		StopButtonLight:    SetStopLamp,
 		MotorDirection:     SetMotorDirection,
 	}
-}
-
-// opprinnelig i elevator_io
-const _pollRate = 20 * time.Millisecond
-
-var _initialized bool = false
-var _numFloors int = 4
-var _mtx sync.Mutex
-var _conn net.Conn
-
-type MotorDirection int
-
-const (
-	MD_Up   MotorDirection = 1
-	MD_Down                = -1
-	MD_Stop                = 0
-)
-
-type ButtonType int
-
-const (
-	BT_HallUp   ButtonType = 0
-	BT_HallDown            = 1
-	BT_Cab                 = 2
-)
-
-type ButtonEvent struct {
-	Floor  int
-	Button ButtonType
 }
 
 func Init(addr string, numFloors int) {
@@ -289,31 +287,31 @@ func toBool(a byte) bool {
 	return b
 }
 
-// oppdaterer confirmationstate
+// Update the order confirmationstates
 func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState {
-	isPresent := map[ConfirmationState]bool{} // map som lagrer om hver confimationstate(0,1,2) er tilstede
+	isPresent := map[ConfirmationState]bool{} // which stores the presence of each state
 	for _, v := range list {
 		isPresent[v] = true
 	}
 	switch {
-	case isPresent[0] && isPresent[1] && isPresent[2]: //should ideally not happen
-		return 1
-		//panic("Confirmationstates 0,1,2 at the same time :(")
-	case !isPresent[0]: // alle har 1 eller 2
-		//fmt.Println("Order registrerd on all peers, Confirmed!")
-		return 2
-	case isPresent[2] && isPresent[0]: // alle har 0 eller 2 (noen har utført ordren)
-		if wasTimedOut {
-			return 2
+	case isPresent[no_call] && isPresent[unregistered] && isPresent[registered]: //should ideally not happen
+		return unregistered // returns 1 if it happens, so no orders are lost
+
+	case !isPresent[no_call]: // Every peer has a unregistered or registered order, order should then be registered on all peers
+
+		return registered
+	case isPresent[registered] && isPresent[no_call]: // Order is served. No order should be returned
+		if wasTimedOut { //checks who has the newest information in case of severe packetloss og network disconnect
+			return registered
 		} else {
-			return 0
+			return no_call
 		}
 
-	case isPresent[0] && isPresent[1]: // alle har 0 eller 1 (noen har fått en ny ordre)
-		return 1
+	case isPresent[no_call] && isPresent[unregistered]: // Some peers has a new order. Every peer should then get the order
+		return unregistered
 
-	case !isPresent[1] && !isPresent[2]:
-		return 0
+	case !isPresent[unregistered] && !isPresent[registered]:
+		return no_call
 	}
-	return 1 //default
+	return unregistered //default to loose no order
 }

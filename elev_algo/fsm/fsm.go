@@ -131,13 +131,12 @@ func FetchElevatorStatus() elev.Elevator {
 	return elevator
 }
 
-func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her må vi ha cyclicupdate
+func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) {
 	for i := 0; i < len(hallRequests); i++ { //for every floor
-		for j := 0; j < 2; j++ { //and every button
+		for j := 0; j < 2; j++ { //for every button
 			list := make([]elev.ConfirmationState, 2)
 			list[0] = hallRequests[i][j]
 			list[1] = elevator.Requests[i][j]
-			//fmt.Println("LISTE: ", list)
 			elevator.Requests[i][j] = elev.CyclicUpdate(list, false)
 			if elevator.Requests[i][j] == 2 && hallRequests[i][j] != 2 {
 				elevator.Requests[i][j] = 1
@@ -160,6 +159,7 @@ func MotorTimeout() {
 			time_started = timer.Get_wall_time()
 
 		}
+		// Checks if the elevator has been moving for too long without reaching its destination
 		if (elevator.State == elev.MOVE) && (prevState == elev.MOVE) && ((time_started + timeout_time) < timer.Get_wall_time()) {
 			fmt.Println("---------------------Motor timeout----------------------------")
 			RestartElevator()
@@ -181,7 +181,6 @@ func RestartElevator() { // må vel egt implementere at den sier ifra at den ikk
 		time.Sleep(10 * time.Millisecond)
 		outputDevice.MotorDirection(elev.MD_Stop)
 	}
-	fmt.Println("Starter heismotor på nytt, går videre")
 	elevator.State = elev.IDLE
 
 }
