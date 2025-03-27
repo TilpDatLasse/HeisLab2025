@@ -1,7 +1,11 @@
 package fsm
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
@@ -17,6 +21,7 @@ var (
 
 func FsmInit() {
 	elevator = elev.Elevator{}
+	GetCabOrders()
 	elevator.Config.DoorOpenDurationS = 3.0 // Default value
 	elevator.Config.ClearRequestVariant = elev.CV_InDirn
 	outputDevice = elev.Elevio_getOutputDevice()
@@ -25,6 +30,7 @@ func FsmInit() {
 	elevator.State = elev.IDLE
 	elevator.Obs = false
 	elevator.MotorStop = false
+
 }
 
 func FsmOnInitBetweenFloors() {
@@ -35,6 +41,7 @@ func FsmOnInitBetweenFloors() {
 
 func FsmOnRequestButtonPress(btnFloor int, btnType int) {
 	if btnType == 2 { //is cab-request
+		SaveCabOrders()
 		elevator.Requests[btnFloor][btnType] = 2
 		FsmOrderInList(btnFloor, btnType, true)
 	} else {
@@ -208,4 +215,100 @@ func RestartElevator() { // må vel egt implementere at den sier ifra at den ikk
 	fmt.Println("Starter heismotor på nytt, går videre")
 	elevator.State = elev.IDLE
 
+}
+
+func SaveCabOrders() {
+	list := make([]elev.ConfirmationState, 4)
+
+	orderstring := ""
+	for i := 0; i < len(elevator.Requests); i++ {
+		order := elevator.Requests[i][2] // Assuming the 3rd column holds boolean values
+		list[i] = order
+
+	}
+	list2 := cabToBool(list)
+	for i := 0; i < len(list2); i++ {
+		order := list2[i] // Assuming the 3rd column holds boolean values
+		str := strconv.FormatBool(order)
+
+		orderstring += (str + " ")
+	}
+
+	// Åpner filen for skriving, oppretter den hvis den ikke finnes
+	file, err := os.Create("example.txt")
+	if err != nil {
+		fmt.Println("Feil ved oppretting av fil:", err)
+		return
+	}
+	defer file.Close()
+
+	// Skriver innhold til filen
+	_, err = file.WriteString(orderstring)
+	if err != nil {
+		fmt.Println("Feil ved skriving til fil:", err)
+		return
+	}
+
+	fmt.Println("Tekst skrevet til fil!")
+}
+
+func GetCabOrders() {
+
+	file, err := os.Open("example.txt")
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Read the first line
+	scanner := bufio.NewScanner(file)
+	if scanner.Scan() {
+		line := scanner.Text()        // Read the line as a string
+		words := strings.Fields(line) // Split by whitespace
+
+		// Convert to boolean values
+		var bools []bool
+		for _, word := range words {
+			value, err := strconv.ParseBool(word)
+			if err != nil {
+				fmt.Println("Error parsing boolean:", err)
+				return
+			}
+			bools = append(bools, value)
+
+		}
+		CabRequests := boolToConfirmationState(bools)
+		for i := 0; i < len(CabRequests); i++ {
+			elevator.Requests[i][2] = CabRequests[i] // Assuming the 3rd column holds boolean values
+
+		}
+		// Print the parsed boolean values
+		fmt.Println("Parsed booleans:", bools)
+	}
+
+	// Check for any scanning errors
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+	}
+}
+
+func cabToBool(list []elev.ConfirmationState) []bool {
+	boolList := make([]bool, len(list))
+	for i, v := range list {
+		boolList[i] = v != 0
+	}
+	return boolList
+}
+
+func boolToConfirmationState(list []bool) []elev.ConfirmationState {
+	stateList := make([]elev.ConfirmationState, len(list))
+	for i, v := range list {
+		if v {
+			stateList[i] = 2
+		} else {
+			stateList[i] = 0
+		}
+	}
+	return stateList
 }

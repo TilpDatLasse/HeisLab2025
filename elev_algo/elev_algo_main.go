@@ -40,6 +40,7 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 		select {
 		case a := <-ch.DrvButtons:
 			fsm.FsmOnRequestButtonPress(a.Floor, int(a.Button))
+			fsm.SaveCabOrders()
 
 		case a := <-ch.DrvFloors:
 			fsm.FsmOnFloorArrival(a)
