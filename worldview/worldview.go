@@ -100,7 +100,7 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 
 // Comparing info from the different peers to check if we can update the cyclic counters
 func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
-	InfoMapMutex.Lock() 
+	InfoMapMutex.Lock()
 	wasTimedOut := wasTimedOut()
 	if len(InfoMap) != 0 {
 
@@ -173,7 +173,6 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 		time.Sleep(50 * time.Millisecond)
 	}
 }
-
 
 func wasTimedOut() bool {
 	var timeOut float64 = 1.0
