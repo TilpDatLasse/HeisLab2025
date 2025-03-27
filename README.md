@@ -9,6 +9,13 @@ This project implements a **peer-to-peer elevator control system**. Instead of a
 The system will operate a single elevator if launched on its own. When multiple peers are launched, the peers will communicate over udp to ensure service of elevator orders. The system should function when packetloss occurs, as well as when sudden failures in the system happens. The full functionality specifications can be found [here](https://github.com/TTK4145/Project.git).
 
 
+## 🚀 **Features**  
+✔ Peer-to-peer communication for distributed elevator control  
+✔ Fault-tolerant design that handles network failures  
+✔ Hall Request Assigner (HRA) for efficient elevator dispatching  
+✔ Supports both a **physical** and **simulated** elevator  
+✔ Uses **UDP for inter-peer communication** and **TCP for elevator control** 
+
 
 Modules
 --------
