@@ -16,7 +16,7 @@ worldview:
 
 How to run the program:
 
-To run the code, one will have to start either the physival elevator server or the simulator (simulator can be found here:---------------insert link----------------- )
+To run the code, one will have to start either the physival elevator server or the simulator found [here](https://github.com/TTK4145/Simulator-v2.git).
 
 When running the program in the terminal, you have the option to set a flag for the peer name (id), UDP ports (udpWVPort and udpPeersPort) and TCP Port (simPort) between the program and the server.
 
