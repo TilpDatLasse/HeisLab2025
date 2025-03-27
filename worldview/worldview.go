@@ -37,7 +37,6 @@ type WVChans struct {
 	WorldViewRxChan chan WorldView
 }
 
-
 var GetMyWorldView = make(chan MyWVrequest)
 var SetMyWorldView = make(chan WorldView)
 
@@ -80,12 +79,18 @@ type HRAInput struct {
 
 func WVServer() { // ha channel som input?
 	for {
-		select{
-		case wvRequest:= <- GetMyWorldView:
+		select {
+		case wvRequest := <-GetMyWorldView:
 			wvRequest.ResponseChan <- MyWorldView
-		case wv:= <- SetMyWorldView:
+		//case wv := <-SetMyWorldView:
+			//WorldViewMap[wv.Id] = wv
+			//peers.PeerToUpdate <- wv.PeerList
+		case wvMapRequest := <-GetWorldViewMap:
+			wvMapRequest.ResponseChan <- WorldViewMap
+		case wv := <- SetWorldViewMap:
 			WorldViewMap[wv.Id] = wv
 			peers.PeerToUpdate <- wv.PeerList
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
@@ -190,7 +195,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 			InfoMapMutex.Unlock()
 			MyWorldView.InfoMap = InfoMap
 			//WVMapMutex.Lock()
-			SetMyWorldView <- MyWorldView
+			SetWorldViewMap <- MyWorldView
 			//WorldViewMap[ID] = MyWorldView
 			//WVMapMutex.Unlock()
 
