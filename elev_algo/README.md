@@ -7,6 +7,7 @@ Finite State Machine (FSM)
 
 Requests
 -----
+ ClearAtCurrentFloor
 
 Timer
 -----
@@ -35,4 +36,4 @@ The elevator algorithm is based on preferring to continue in the direction of tr
      - A: Always clear the request for entering the elevator in the opposite direction
      - B: Clear the request in the opposite direction if there are no further requests in the direction of travel
      
-The implementations of these three functions are found in [requests.go](requests.go).
+The implementations of these three functions are found in [requests.go](requests/requests.go).
