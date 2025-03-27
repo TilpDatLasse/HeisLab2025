@@ -5,8 +5,8 @@ import (
 )
 
 // Converting an elev.Elevator-variabel to an InformationElev-variabel
-func Converter(e elev.Elevator) InformationElev {
-	rawInput := e
+func Converter(rawInput elev.Elevator) InformationElev {
+
 	hallRequests := make([][2]elev.ConfirmationState, len(rawInput.Requests))
 	cabRequests := make([]elev.ConfirmationState, len(rawInput.Requests))
 
@@ -17,6 +17,7 @@ func Converter(e elev.Elevator) InformationElev {
 
 	input := InformationElev{
 		HallRequests: hallRequests,
+		MotorStop:    rawInput.MotorStop,
 		State: HRAElevState{
 			Behavior:    stateToString(rawInput.State),
 			Floor:       rawInput.Floor,

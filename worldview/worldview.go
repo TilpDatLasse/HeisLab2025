@@ -49,6 +49,7 @@ type InformationElev struct {
 	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
 	Locked       elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
 	ElevID       string
+	MotorStop    bool
 }
 
 type HRAElevState struct {
@@ -100,16 +101,19 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 
 // Comparing info from the different peers to check if we can update the cyclic counters
 func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
-	InfoMapMutex.Lock()
 	wasTimedOut := wasTimedOut()
-	if len(InfoMap) != 0 {
+
+	//InfoMapMutex.Lock()
+	infoMap := deepCopyWV(MyWorldView).InfoMap
+	//InfoMapMutex.Unlock()
+	if len(infoMap) != 0 {
 
 		//Comparing hallrequests
 		for i := 0; i < elev.N_FLOORS; i++ {
 			for j := 0; j < elev.N_BUTTONS-1; j++ {
-				listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+				listOfElev := make([]elev.ConfirmationState, len(infoMap))
 				k := 0
-				for _, elev := range InfoMap {
+				for _, elev := range infoMap {
 					if elev.HallRequests == nil {
 						return
 					}
@@ -118,36 +122,40 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 				}
 				update := elev.CyclicUpdate(listOfElev, wasTimedOut)
 
-				if _, ok := InfoMap[ID]; ok {
+				if _, ok := infoMap[ID]; ok {
+					InfoMapMutex.Lock()
 					InfoMap[ID].HallRequests[i][j] = update
+					InfoMapMutex.Unlock()
 				}
 			}
 		}
 
 		// Comparing the Locked-attribute
-		listOfElev := make([]elev.ConfirmationState, len(InfoMap))
+		listOfElev := make([]elev.ConfirmationState, len(infoMap))
 		k := 0
-		for _, elev := range InfoMap {
+		for _, elev := range infoMap {
 			listOfElev[k] = elev.Locked
 			k++
 		}
 		update := elev.CyclicUpdate(listOfElev, wasTimedOut)
 
 		InfoElev.Locked = update
+		InfoMapMutex.Lock()
 		InfoMap[ID] = InfoElev
+		InfoMapMutex.Unlock()
 
 	}
 	select {
 	case ch_syncRequestsSingleElev <- InfoMap[ID].HallRequests:
 	default:
 	}
-	InfoMapMutex.Unlock()
 }
 
 // henter status fra heisen og sender på channel som en informationElev-variabel
 // Getting the status of the local elevator and sending on wv-channel
 func SetElevatorStatus(ch_WVTx chan WorldView) {
 	for {
+		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
 		if InfoElev.Locked == 0 { //hvis ikke låst
 			InfoElev = Converter(fsm.FetchElevatorStatus())
 			if ShouldSync {
@@ -163,9 +171,12 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 			WVMapMutex.Lock()
 			WorldViewMap[ID] = MyWorldView
 			WVMapMutex.Unlock()
+			if hasMotorStopped {
+				continue
+			}
 
 			select {
-			case ch_WVTx <- MyWorldView:
+			case ch_WVTx <- deepCopyWV(MyWorldView):
 			default:
 				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
 			}
@@ -178,19 +189,46 @@ func wasTimedOut() bool {
 	var timeOut float64 = 1.0
 	var keyList []string
 	var maxDiff float64 = 0
-	//MÅ HA EN MUTEX HER, men koden kræsjer
-	//WVMapMutex.Lock()
-	for key, _ := range WorldViewMap {
+
+	WVMapMutex.Lock()
+	WVMapCopy := DeepCopyWVMap(WorldViewMap)
+	WVMapMutex.Unlock()
+
+	for key, _ := range WVMapCopy {
 		keyList = append(keyList, key)
 	}
-	//WVMapMutex.Unlock()
 	for i := 0; i < len(keyList)-1; i++ {
-		//WVMapMutex.Lock()
-		Diff := math.Abs(WorldViewMap[keyList[i]].Timestamp - WorldViewMap[keyList[i+1]].Timestamp)
-		//WVMapMutex.Unlock()
+		Diff := math.Abs(WVMapCopy[keyList[i]].Timestamp - WVMapCopy[keyList[i+1]].Timestamp)
+
 		if Diff > maxDiff {
 			maxDiff = Diff
 		}
 	}
 	return maxDiff > timeOut
+}
+
+func deepCopyWV(original WorldView) WorldView {
+	InfoMapMutex.Lock()
+	copyMap := make(map[string]InformationElev)
+	for key, value := range original.InfoMap {
+		copyMap[key] = value
+	}
+	copy := WorldView{
+		InfoMap:   copyMap,
+		Id:        original.Id,
+		Timestamp: original.Timestamp,
+		PeerList:  original.PeerList,
+	}
+	InfoMapMutex.Unlock()
+	return copy
+}
+
+func DeepCopyWVMap(original map[string]WorldView) map[string]WorldView {
+	//WVMapMutex.Lock()
+	copy := make(map[string]WorldView)
+	for key, value := range original {
+		copy[key] = deepCopyWV(value)
+	}
+	//WVMapMutex.Unlock()
+	return copy
 }

@@ -9,8 +9,11 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
 )
 
-var elevator elev.Elevator
-var outputDevice elev.ElevatorOutputDevice
+var (
+	elevator            elev.Elevator
+	outputDevice        elev.ElevatorOutputDevice
+	motorTimeoutStarted float64 = timer.Get_wall_time()
+)
 
 func FsmInit() {
 	elevator = elev.Elevator{}
@@ -21,6 +24,7 @@ func FsmInit() {
 	elevator.Dirn = 0
 	elevator.State = elev.IDLE
 	elevator.Obs = false
+	elevator.MotorStop = false
 }
 
 func FsmOnInitBetweenFloors() {
@@ -45,17 +49,18 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 		return
 	}
 	switch elevator.State {
-	case elev.DOOROPEN:
-		if requests.ShouldClearImmediately(elevator, btnFloor, btnType) {
-			elevator.OwnRequests[btnFloor][btnType] = false
-			elevator.Requests[btnFloor][btnType] = 0
-			timer.Timer_start(elevator.Config.DoorOpenDurationS)
-			fmt.Println("DEBUG 1")
+	// case elev.DOOROPEN:
+	// 	if requests.ShouldClearImmediately(elevator, btnFloor, btnType) {
+	// 		outputDevice.DoorLight(true)
+	// 		timer.Timer_start(elevator.Config.DoorOpenDurationS)
+	// 		elevator.OwnRequests[btnFloor][btnType] = false
+	// 		elevator.Requests[btnFloor][btnType] = 0
+	// 		fmt.Println("DEBUG 1")
 
-			FsmOnDoorTimeout()
-		} else {
-			elevator.OwnRequests[btnFloor][btnType] = true
-		}
+	// 		FsmOnDoorTimeout()
+	// 	} else {
+	// 		elevator.OwnRequests[btnFloor][btnType] = true
+	// 	}
 	case elev.MOVE:
 		elevator.OwnRequests[btnFloor][btnType] = true
 	case elev.IDLE:
@@ -78,6 +83,7 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 }
 
 func FsmOnFloorArrival(newFloor int) {
+	motorTimeoutStarted = timer.Get_wall_time()
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)
 
@@ -155,18 +161,19 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her m√
 
 func MotorTimeout() {
 	var prevState elev.State = elev.IDLE
-	timeout_time := 12.0
-	var time_started float64 = 0.0
+	timeout_time := 4.0
+
 	for {
 		if (elevator.State == elev.MOVE) && (elevator.State != prevState) {
-			time_started = timer.Get_wall_time()
+			motorTimeoutStarted = timer.Get_wall_time()
 
 		}
-		if (elevator.State == elev.MOVE) && (prevState == elev.MOVE) && ((time_started + timeout_time) < timer.Get_wall_time()) {
+		if (elevator.State == elev.MOVE) && (prevState == elev.MOVE) && ((motorTimeoutStarted + timeout_time) < timer.Get_wall_time()) {
 			fmt.Println("---------------------Motor timeout----------------------------")
+			elevator.MotorStop = true
 			RestartElevator()
-
-			time_started = timer.Get_wall_time()
+			go ifPowerloss()
+			motorTimeoutStarted = timer.Get_wall_time()
 		}
 
 		prevState = elevator.State
@@ -175,6 +182,20 @@ func MotorTimeout() {
 
 	}
 
+}
+
+func ifPowerloss() {
+
+	for elevator.MotorStop {
+		if elev.GetFloor() == -1 {
+			FsmOnInitBetweenFloors()
+		} else {
+			FsmInit()
+			motorTimeoutStarted = timer.Get_wall_time()
+		}
+		fmt.Println("motorstop = ", elevator.MotorStop)
+		time.Sleep(2 * time.Second)
+	}
 }
 
 func RestartElevator() { // m√• vel egt implementere at den sier ifra at den ikke er tilgjengelig

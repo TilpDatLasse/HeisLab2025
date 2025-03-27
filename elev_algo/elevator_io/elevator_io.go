@@ -46,6 +46,7 @@ type Elevator struct {
 	OwnRequests [N_FLOORS][N_BUTTONS]bool
 	Config      ElevatorConfig
 	Obs         bool
+	MotorStop   bool
 }
 
 type ElevatorConfig struct {
