@@ -88,7 +88,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 	}
 }
 
-// Sender output til elev-modulen
+// Sending output from HRA to the local elevator
 func sendToElev(output map[string][][2]bool, ch_elevatorQueue chan [][2]bool, ID string) {
 	for k, v := range output {
 		if k == ID {
