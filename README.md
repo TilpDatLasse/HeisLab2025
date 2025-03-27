@@ -1,5 +1,5 @@
 
-Elevator project TTK4145 Spring 2025
+Elevator Project TTK4145 Spring 2025
 ==========================================
 
 
@@ -29,7 +29,7 @@ How to run the program
 
 How to run the program:
 
-To run the code, one will have to start either the physival elevator server or the simulator found [here](https://github.com/TTK4145/Simulator-v2.git).
+To run the code, one will have to start either the physical elevator server or the elevator simulator found [here](https://github.com/TTK4145/Simulator-v2.git).
 
 When running the program in the terminal, you have the option to set a flag for the peer name (id), UDP ports (udpWVPort and udpPeersPort) and TCP Port (simPort) between the program and the server.
 
