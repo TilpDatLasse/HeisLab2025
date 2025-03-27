@@ -41,6 +41,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 			elevstate := infoMap[key].State
 			input.States[key] = elevstate
 			input.HallRequests = worldview.HallToBool(infoMap[key].HallRequests) //Converting from confirmationstate to bool
+			input.HallRequests = worldview.HallToBool(infoMap[key].HallRequests) //Converting from confirmationstate to bool
 		}
 
 		if len(infoMap) > 0 {
@@ -74,6 +75,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 	}
 }
 
+// Sends output to the elev_algo module
 // Sends output to the elev_algo module
 func sendToElev(output map[string][][2]bool, ch_elevatorQueue chan [][2]bool, ID string) {
 	for k, v := range output {
