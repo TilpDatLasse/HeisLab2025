@@ -1,7 +1,7 @@
 Network module 
 ==========================================
 
-Network module based on modified handout code for the project found at :[ linklink](https://github.com/TTK4145/Network-go.git)
+Network module based on modified handout code for the project found [here](https://github.com/TTK4145/Network-go.git).
 
 Channel-in/channel-out pairs of (almost) any custom or built-in data type can be supplied to a pair of transmitter/receiver functions. 
 Data sent to the transmitter function is automatically serialized and broadcast on the specified port. 
