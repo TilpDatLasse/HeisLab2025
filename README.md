@@ -4,6 +4,7 @@ Elevator Project TTK4145 Spring 2025
 
 
 This is a peer-to-peer elevator system. The code will launch a single peer to the elevator network. We chose a peer-to-peer system as we found this the easiest, as having a master-slave system would be harder to control when packetloss and network connection loss occurs.
+This project implements a **peer-to-peer elevator control system**. Instead of a traditional master-slave architecture, we chose a P2P approach to **increase fault tolerance** and **handle packet loss more effectively**.
 
 The system will operate a single elevator if launched on its own. When multiple peers are launched, the peers will communicate over udp to ensure service of elevator orders. The system should function when packetloss occurs, as well as when sudden failures in the system happens. The full functionality specifications can be found [here](https://github.com/TTK4145/Project.git).
 
