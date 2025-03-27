@@ -24,12 +24,12 @@ func main() {
 	)
 
 	SingElevChans := elev_algo.SingleElevatorChans{
-		Drv_buttons:       make(chan elev.ButtonEvent),
-		Drv_floors:        make(chan int),
-		Drv_obstr:         make(chan bool),
-		Drv_stop:          make(chan bool),
-		Timer_channel:     make(chan bool),
-		Single_elev_queue: make(chan [][2]bool),
+		DrvButtons:      make(chan elev.ButtonEvent),
+		DrvFloors:       make(chan int),
+		DrvObstr:        make(chan bool),
+		DrvStop:         make(chan bool),
+		TimerChannel:    make(chan bool),
+		SingleElevQueue: make(chan [][2]bool),
 	}
 
 	WorldViewChans := worldview.WVChans{
@@ -50,12 +50,12 @@ func main() {
 	flag.Parse()
 
 	go elev_algo.ElevMain(SingElevChans, SyncChans.SyncRequestSingleElev, simPort)
-	go network.NetworkMain(id, peersPort, WorldViewChans, udpWVPort)
 
 	// Sleep when initializing to make sure the elevator is ready
-	time.Sleep(4 * time.Second)
+	time.Sleep(3 * time.Second)
 
-	go HRA.HRAMain(SingElevChans.Single_elev_queue, SyncChans.ShouldSync, SyncChans.InformationElevFromSync, id)
+	go network.NetworkMain(id, peersPort, WorldViewChans, udpWVPort)
+	go HRA.HRAMain(SingElevChans.SingleElevQueue, SyncChans.ShouldSync, SyncChans.InformationElevFromSync, id)
 	go worldview.SetElevatorStatus(WorldViewChans.WorldViewTxChan)
 	go worldview.WorldViewMain(WorldViewChans.WorldViewRxChan, SyncChans.SyncRequestSingleElev, SyncChans.ShouldSync, id)
 	go syncing.SyncingMain(SyncChans)

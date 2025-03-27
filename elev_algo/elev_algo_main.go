@@ -10,12 +10,12 @@ import (
 )
 
 type SingleElevatorChans struct {
-	Drv_buttons       chan elev.ButtonEvent
-	Drv_floors        chan int
-	Drv_obstr         chan bool
-	Drv_stop          chan bool
-	Timer_channel     chan bool
-	Single_elev_queue chan [][2]bool
+	DrvButtons      chan elev.ButtonEvent
+	DrvFloors       chan int
+	DrvObstr        chan bool
+	DrvStop         chan bool
+	TimerChannel    chan bool
+	SingleElevQueue chan [][2]bool
 }
 
 func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, simPort string) {
@@ -30,29 +30,29 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 		fmt.Println("Dytter heisen ned til nærmeste etasje")
 	}
 
-	go elev.PollButtons(ch.Drv_buttons)
-	go elev.PollFloorSensor(ch.Drv_floors)
-	go elev.PollObstructionSwitch(ch.Drv_obstr)
-	go elev.PollStopButton(ch.Drv_stop)
+	go elev.PollButtons(ch.DrvButtons)
+	go elev.PollFloorSensor(ch.DrvFloors)
+	go elev.PollObstructionSwitch(ch.DrvObstr)
+	go elev.PollStopButton(ch.DrvStop)
 	go fsm.MotorTimeout()
-	go timer.Time(ch.Timer_channel)
+	go timer.Time(ch.TimerChannel)
 
 	for {
 		select {
-		case a := <-ch.Drv_buttons:
+		case a := <-ch.DrvButtons:
 			fsm.FsmOnRequestButtonPress(a.Floor, int(a.Button))
 
-		case a := <-ch.Drv_floors:
+		case a := <-ch.DrvFloors:
 			fsm.FsmOnFloorArrival(a)
 
-		case <-ch.Timer_channel:
+		case <-ch.TimerChannel:
 			timer.Timer_stop()
 			fsm.FsmOnDoorTimeout()
 
-		case <-ch.Drv_obstr:
+		case <-ch.DrvObstr:
 			fsm.FlipObs()
 
-		case a := <-ch.Drv_stop:
+		case a := <-ch.DrvStop:
 			if a {
 				fsm.FsmStop()
 			}
@@ -60,7 +60,7 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 				fsm.FsmAfterStop()
 			}
 
-		case outputHRA := <-ch.Single_elev_queue:
+		case outputHRA := <-ch.SingleElevQueue:
 			for f, floor := range outputHRA {
 				for d, isOrder := range floor {
 					fsm.FsmOrderInList(f, d, isOrder)
