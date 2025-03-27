@@ -1,3 +1,11 @@
+
+Elev_algo Module
+================
+The elevator algorithm module controls a single elevator over TCP, managing movement, state transitions, and user input. It comprises four submodules: elevator_io, fsm, requests and timer. 
+
+The elevator_io submodule interfaces with hardware to send movement commands, read floor sensors, and detect button presses. It is based on code from the [driver-go] (https://github.com/TTK4145/driver-go.git) repository.
+
+
 Rationale
 =========
 
