@@ -40,7 +40,6 @@ func SyncingMain(ch SyncChans) {
 	}
 }
 
-// Compares worldviews until they are all equal
 func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
 		worldview.WVMapMutex.Lock()
