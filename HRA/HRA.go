@@ -30,11 +30,11 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 
 		time.Sleep(1000 * time.Millisecond)
 
-		if !syncing.SyncRequest { // litt dårlig kode men funker vel
-			ch_shouldSync <- true //forespørsel om synking
+		if !syncing.SyncRequest { 
+			ch_shouldSync <- true //Sending a request to sync
 		}
 
-		infoMap := <-ch_fromSync //venter på at synking er ferdig
+		infoMap := <-ch_fromSync //Waiting for syncing to complete
 
 		var input worldview.HRAInput
 		input.States = make(map[string]worldview.HRAElevState)
@@ -42,7 +42,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 		for key := range infoMap {
 			elevstate := infoMap[key].State
 			input.States[key] = elevstate
-			input.HallRequests = worldview.HallToBool(infoMap[key].HallRequests) //koverterer fra confirmationstate til bool
+			input.HallRequests = worldview.HallToBool(infoMap[key].HallRequests) //Converting from confirmationstate to bool 
 		}
 
 		if len(infoMap) > 0 {
@@ -76,7 +76,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 	}
 }
 
-// Sender output til elev-modulen
+// Sends output to the elev_algo module 
 func sendToElev(output map[string][][2]bool, ch_elevatorQueue chan [][2]bool, ID string) {
 	for k, v := range output {
 		if k == ID {

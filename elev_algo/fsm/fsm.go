@@ -42,7 +42,7 @@ func FsmOnRequestButtonPress(btnFloor int, btnType int) {
 
 func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 	elevator.OwnRequests[btnFloor][btnType] = isOrder // Adding order if there is a new one, deleting if HRA changes its mind
-	if !isOrder {                                     //if the HRA says there is no order here, there is nothing else to do (exept deleting it)
+	if !isOrder {                                     //If the HRA says there is no order here, there is nothing else to do (exept deleting it)
 		return
 	}
 	switch elevator.State {
