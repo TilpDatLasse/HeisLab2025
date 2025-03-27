@@ -83,11 +83,11 @@ func WVServer() { // ha channel som input?
 		case wvRequest := <-GetMyWorldView:
 			wvRequest.ResponseChan <- MyWorldView
 		//case wv := <-SetMyWorldView:
-			//WorldViewMap[wv.Id] = wv
-			//peers.PeerToUpdate <- wv.PeerList
+		//WorldViewMap[wv.Id] = wv
+		//peers.PeerToUpdate <- wv.PeerList
 		case wvMapRequest := <-GetWorldViewMap:
 			wvMapRequest.ResponseChan <- WorldViewMap
-		case wv := <- SetWorldViewMap:
+		case wv := <-SetWorldViewMap:
 			WorldViewMap[wv.Id] = wv
 			peers.PeerToUpdate <- wv.PeerList
 			time.Sleep(10 * time.Millisecond)

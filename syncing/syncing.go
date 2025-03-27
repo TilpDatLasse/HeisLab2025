@@ -50,9 +50,9 @@ func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.Confirmati
 		responseChan := make(chan map[string]worldview.WorldView)
 		var request worldview.WVMapRequest
 		request.ResponseChan = responseChan
-		
+
 		worldview.GetWorldViewMap <- request
-		wv := <- responseChan
+		wv := <-responseChan
 		if AllWorldViewsEqual(wv) {
 			go syncDone(ShouldSync)
 			break

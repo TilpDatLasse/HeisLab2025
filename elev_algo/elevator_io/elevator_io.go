@@ -295,7 +295,7 @@ func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState 
 	}
 	switch {
 	case isPresent[no_call] && isPresent[unregistered] && isPresent[registered]: //should ideally not happen
-		return unregistered // returns 1 if it happens, so no orders are lost
+		return unregistered // returns unregistered if it happens, so no orders are lost
 
 	case !isPresent[no_call]: // Every peer has a unregistered or registered order, order should then be registered on all peers
 

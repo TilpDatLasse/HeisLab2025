@@ -43,10 +43,10 @@ To set a a flag when running the code, include -FLAGIDENTIFER=value, where FLAGI
 id = one
 simPort = 15657
 udpWVPort = 14700
-udpPeersPort = 16500
+
 
 Example of how to run the code with flags:
 
-go run main.go -id=two -simPort=11111 -udpWVPort=22222 -udpPeersPort=33333
+go run main.go -id=two -simPort=11111 -udpWVPort=22222
 
 
