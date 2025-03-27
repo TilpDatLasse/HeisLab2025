@@ -7,6 +7,33 @@ import (
 	"time"
 )
 
+const _pollRate = 20 * time.Millisecond
+
+var _initialized bool = false
+var _numFloors int = 4
+var _mtx sync.Mutex
+var _conn net.Conn
+
+type MotorDirection int
+
+const (
+	MD_Up   MotorDirection = 1
+	MD_Down                = -1
+	MD_Stop                = 0
+)
+
+type ButtonType int
+const (
+	BT_HallUp   ButtonType = 0
+	BT_HallDown            = 1
+	BT_Cab                 = 2
+)
+
+type ButtonEvent struct {
+	Floor  int
+	Button ButtonType
+}
+
 const (
 	B_HallUp   = 0
 	B_HallDown = 1
@@ -89,34 +116,6 @@ func Elevio_getOutputDevice() ElevatorOutputDevice {
 	}
 }
 
-// opprinnelig i elevator_io
-const _pollRate = 20 * time.Millisecond
-
-var _initialized bool = false
-var _numFloors int = 4
-var _mtx sync.Mutex
-var _conn net.Conn
-
-type MotorDirection int
-
-const (
-	MD_Up   MotorDirection = 1
-	MD_Down                = -1
-	MD_Stop                = 0
-)
-
-type ButtonType int
-
-const (
-	BT_HallUp   ButtonType = 0
-	BT_HallDown            = 1
-	BT_Cab                 = 2
-)
-
-type ButtonEvent struct {
-	Floor  int
-	Button ButtonType
-}
 
 func Init(addr string, numFloors int) {
 	if _initialized {
@@ -290,31 +289,27 @@ func toBool(a byte) bool {
 	return b
 }
 
-// oppdaterer confirmationstate
+// updating ConfirmationState
 func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState {
-	isPresent := map[ConfirmationState]bool{} // map som lagrer om hver confimationstate(0,1,2) er tilstede
+	isPresent := map[ConfirmationState]bool{} 
 	for _, v := range list {
 		isPresent[v] = true
 	}
 	switch {
-	case isPresent[0] && isPresent[1] && isPresent[2]: //should ideally not happen
+	case isPresent[0] && isPresent[1] && isPresent[2]: 
 		return 1
-		//panic("Confirmationstates 0,1,2 at the same time :(")
-	case !isPresent[0]: // alle har 1 eller 2
-		//fmt.Println("Order registrerd on all peers, Confirmed!")
+	case !isPresent[0]: 
 		return 2
-	case isPresent[2] && isPresent[0]: // alle har 0 eller 2 (noen har utført ordren)
+	case isPresent[2] && isPresent[0]: 
 		if wasTimedOut {
 			return 2
 		} else {
 			return 0
 		}
-
-	case isPresent[0] && isPresent[1]: // alle har 0 eller 1 (noen har fått en ny ordre)
+	case isPresent[0] && isPresent[1]: 
 		return 1
-
 	case !isPresent[1] && !isPresent[2]:
 		return 0
 	}
-	return 1 //default
+	return 1
 }

@@ -68,9 +68,9 @@ func ChooseDirection(e elev.Elevator) (elev.MotorDirection, elev.State) {
 func ShouldStop(e elev.Elevator) bool {
 	switch e.Dirn {
 	case elev.MD_Down:
-		return e.OwnRequests[e.Floor][elev.B_HallDown] || e.OwnRequests[e.Floor][elev.B_Cab] || !requestsBelow(e)
+		return e.OwnRequests[e.Floor][elev.BT_HallDown] || e.OwnRequests[e.Floor][elev.B_Cab] || !requestsBelow(e)
 	case elev.MD_Up:
-		return e.OwnRequests[e.Floor][elev.B_HallUp] || e.OwnRequests[e.Floor][elev.B_Cab] || !RequestsAbove(e)
+		return e.OwnRequests[e.Floor][elev.BT_HallUp] || e.OwnRequests[e.Floor][elev.B_Cab] || !RequestsAbove(e)
 	default:
 		return true
 	}
