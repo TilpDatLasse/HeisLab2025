@@ -28,7 +28,7 @@ HRA (Hall Request Assigner): Decides which elevator should serve a hall order wh
 
 network: Responsible for all udp communication between peers. Information transmitting and receiving are both done in this module.
 
-syncing: 
+syncing: Ensures synchronization of elevator state data across all peers in the peer-to-peer network. 
 
 worldview:
 
