@@ -14,7 +14,7 @@ var outputDevice elev.ElevatorOutputDevice
 
 func FsmInit() {
 	elevator = elev.Elevator{}
-	elevator.Config.DoorOpenDurationS = 3.0 // Default value
+	elevator.Config.DoorOpenDurationS = 3.0
 	elevator.Config.ClearRequestVariant = elev.CV_InDirn
 	outputDevice = elev.Elevio_getOutputDevice()
 	outputDevice.MotorDirection(0)
@@ -35,7 +35,7 @@ func FsmOnRequestButtonPress(btnFloor int, btnType int) {
 		FsmOrderInList(btnFloor, btnType, true)
 	} else {
 		elevator.Requests[btnFloor][btnType] = 1
-		setAllLights(elevator)
+		setAllLights()
 	}
 }
 
@@ -50,8 +50,6 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 			elevator.OwnRequests[btnFloor][btnType] = false
 			elevator.Requests[btnFloor][btnType] = 0
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
-			fmt.Println("DEBUG 1")
-
 			FsmOnDoorTimeout()
 		} else {
 			elevator.OwnRequests[btnFloor][btnType] = true
@@ -74,7 +72,7 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 		}
 	}
 
-	setAllLights(elevator)
+	setAllLights()
 }
 
 func FsmOnFloorArrival(newFloor int) {
@@ -86,7 +84,7 @@ func FsmOnFloorArrival(newFloor int) {
 		outputDevice.DoorLight(true)
 		elevator = requests.ClearAtCurrentFloor(elevator)
 		timer.Timer_start(elevator.Config.DoorOpenDurationS)
-		setAllLights(elevator)
+		setAllLights()
 		elevator.State = elev.DOOROPEN
 	}
 }
@@ -101,7 +99,7 @@ func FsmOnDoorTimeout() {
 		case elev.DOOROPEN:
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
 			elevator = requests.ClearAtCurrentFloor(elevator)
-			setAllLights(elevator)
+			setAllLights()
 		case elev.MOVE, elev.IDLE:
 			outputDevice.DoorLight(false)
 			outputDevice.MotorDirection(elev.MotorDirection(elevator.Dirn))
@@ -121,10 +119,10 @@ func FlipObs() {
 	elevator.Obs = !elevator.Obs
 }
 
-func setAllLights(e elev.Elevator) { //trenger egt ikke ta inn elevator her, er global
+func setAllLights() {
 	for floor := 0; floor < elev.N_FLOORS; floor++ {
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
-			outputDevice.RequestButtonLight(elev.ButtonType(btn), floor, e.Requests[floor][btn])
+			outputDevice.RequestButtonLight(elev.ButtonType(btn), floor, elevator.Requests[floor][btn])
 		}
 	}
 }
@@ -150,7 +148,7 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her mÃ
 			}
 		}
 	}
-	setAllLights(elevator)
+	setAllLights()
 }
 
 func MotorTimeout() {

@@ -17,45 +17,46 @@ type SyncChans struct {
 	SyncRequestSingleElev   chan [][2]elev.ConfirmationState
 }
 
-func SyncingMain(ch SyncChans) {
+func SyncingMain(syncChans SyncChans) {
+
 	for {
-		SyncRequest = <-ch.ShouldSync
-		if SyncRequest { //syncRequest == true, request recieved from HRA or other peer
+		SyncRequest = <-syncChans.ShouldSync
+		if SyncRequest { //syncRequest == true, request of synching recieved from HRA or other peer
 			worldview.ShouldSync = true
-			Sync(ch.ShouldSync, ch.SyncRequestSingleElev)
+			Sync(syncChans.ShouldSync, syncChans.SyncRequestSingleElev)
 
 		} else { //syncRequest == false, sync completed
 			fmt.Println("Sync done!!")
 			worldview.InfoMapMutex.Lock()
 			select {
-			case ch.InformationElevFromSync <- worldview.InfoMap:
+			case syncChans.InformationElevFromSync <- worldview.InfoMap:
 			default:
 				fmt.Println("Warning: message not sent to HRA (channel full)")
 			}
 			worldview.InfoMapMutex.Unlock()
 
-			worldview.ShouldSync = false //må egt sjekke at de andre har fått sendt før vi låser opp, ellers kan input blir endret før det sendes til hra men virker so det går bra
+			worldview.ShouldSync = false
 			worldview.InfoElev.Locked = 0
 		}
 	}
 }
 
-func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
+func Sync(ShouldSync chan bool, SyncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
 		worldview.WVMapMutex.Lock()
-		worldview.CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
+		worldview.CompareAndUpdateInfoMap(SyncRequestsSingleElev)
 		worldview.WVMapMutex.Unlock()
 		worldview.WVMapMutex.Lock()
 		if AllWorldViewsEqual(worldview.WorldViewMap) {
-			go syncDone(ch_shouldSync)
+			go syncDone(ShouldSync)
 			break
 		}
-		time.Sleep(300 * time.Millisecond) //prøve å tune denne?
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 
-func syncDone(ch_shouldSync chan bool) {
-	ch_shouldSync <- false
+func syncDone(ShouldSync chan bool) {
+	ShouldSync <- false
 }
 
 // Compares the worldviews of all peers
@@ -75,7 +76,7 @@ func AllWorldViewsEqual(worldViewMap map[string]worldview.WorldView) bool {
 		}
 	}
 
-	// OBS: denne kan få koden til å kræsje men nødvendig for å sjekke om alle peers har låst infoen sin for synking
+	// Checks if all peers have locked their worldview information before synching
 	wv := worldViewMap[worldview.ID]
 	for _, elev := range wv.InfoMap {
 		if elev.Locked != 2 {

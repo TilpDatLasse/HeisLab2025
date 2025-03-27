@@ -7,9 +7,8 @@ import (
 )
 
 var (
-	timer_channel = make(chan bool)
-	timerEndTime  float64
-	timerActive   bool
+	timerEndTime float64
+	timerActive  bool
 )
 
 func Get_wall_time() float64 {
@@ -17,7 +16,6 @@ func Get_wall_time() float64 {
 }
 
 func Timer_start(duration float64) {
-	//go Time(timer_channel)
 	timerEndTime = Get_wall_time() + duration
 	timerActive = true
 }
