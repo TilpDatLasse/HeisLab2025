@@ -3,7 +3,7 @@ Elev_algo Module
 The elevator algorithm module controls a single elevator over TCP, managing movement, state transitions, and user input. It contains contains code imported from (https://github.com/TTK4145/driver-go.git).
 
 The basic elevator algorithm
-============================
+-------------
 
 The elevator algorithm is based on preferring to continue in the direction of travel, as long as there are any requests in that direction. We implement this algorithm with three functions:
  - Choose direction:
