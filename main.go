@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"time"
 
 	"github.com/TilpDatLasse/HeisLab2025/HRA"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo"
@@ -22,12 +23,6 @@ func main() {
 		peersPort int
 	)
 
-	flag.StringVar(&id, "id", "one", "id of this peer")
-	flag.StringVar(&simPort, "simPort", "15657", "simulation server port")
-	flag.IntVar(&udpWVPort, "udpVWPort", 14700, "udp worldviews port")
-	flag.IntVar(&peersPort, "peerPort", 16500, "online peers port")
-	flag.Parse()
-
 	SingElevChans := elev_algo.SingleElevatorChans{
 		Drv_buttons:       make(chan elev.ButtonEvent),
 		Drv_floors:        make(chan int),
@@ -42,16 +37,27 @@ func main() {
 		WorldViewRxChan: make(chan worldview.WorldView),
 	}
 
-	ch_fromSync := make(chan map[string]worldview.InformationElev)
-	ch_shouldSync := make(chan bool)
+	SyncChans := syncing.SyncChans{
+		ShouldSync:              make(chan bool),
+		InformationElevFromSync: make(chan map[string]worldview.InformationElev),
+		SyncRequestSingleElev:   make(chan [][2]elev.ConfirmationState),
+	}
 
-	ch_syncRequestsSingleElev := make(chan [][2]elev.ConfirmationState)
+	flag.StringVar(&id, "id", "one", "id of this peer")
+	flag.StringVar(&simPort, "simPort", "15657", "simulation server port")
+	flag.IntVar(&udpWVPort, "udpVWPort", 14700, "udp worldviews port")
+	flag.IntVar(&peersPort, "peerPort", 16500, "online peers port")
+	flag.Parse()
 
-	go elev_algo.ElevMain(SingElevChans, ch_syncRequestsSingleElev, simPort)
+	go elev_algo.ElevMain(SingElevChans, SyncChans.SyncRequestSingleElev, simPort)
 	go network.NetworkMain(id, peersPort, WorldViewChans, udpWVPort)
-	go HRA.HRAMain(SingElevChans.Single_elev_queue, ch_shouldSync, ch_fromSync, id)
+
+	// Sleep when initializing to make sure the elevator is ready
+	time.Sleep(4 * time.Second)
+
+	go HRA.HRAMain(SingElevChans.Single_elev_queue, SyncChans.ShouldSync, SyncChans.InformationElevFromSync, id)
 	go worldview.SetElevatorStatus(WorldViewChans.WorldViewTxChan)
-	go worldview.WorldViewMain(WorldViewChans.WorldViewRxChan, ch_syncRequestsSingleElev, ch_shouldSync, id)
+	go worldview.WorldViewMain(WorldViewChans.WorldViewRxChan, SyncChans.SyncRequestSingleElev, SyncChans.ShouldSync, id)
 	go syncing.SyncingMain(ch_shouldSync, ch_fromSync, ch_syncRequestsSingleElev)
 
 	select {}
