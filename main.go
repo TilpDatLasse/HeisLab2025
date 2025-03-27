@@ -75,7 +75,7 @@ func main() {
 // Dele opp i flere moduler (syncing, WorldView, etc.)
 // Rydde bort unnødvendig quick-fixes
 // Robusthet mtp packetloss
-// Locked-variabelen er nok ikke helt robust (?)
+// Locked-variabelen er nok ikke helt robust (?) - må egt sjekke om alle andre har sendt før vi låser opp
 // sjekke hva som egt skjer når den får to ordre i samme etasje (opp og ned), virker ikke som den venter 3 sek
 // endre alt til camelcase(?)
 

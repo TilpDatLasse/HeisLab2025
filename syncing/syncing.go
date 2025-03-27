@@ -34,6 +34,7 @@ func SyncingMain(ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.
 	}
 }
 
+
 func Sync(ch_shouldSync chan bool, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	for {
 		worldview.WVMapMutex.Lock()
