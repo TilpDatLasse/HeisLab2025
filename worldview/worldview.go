@@ -155,6 +155,7 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 // Getting the status of the local elevator and sending on wv-channel
 func SetElevatorStatus(ch_WVTx chan WorldView) {
 	for {
+		peers.PeerToUpdate <- MyWorldView.PeerList
 		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
 		if InfoElev.Locked == 0 { //hvis ikke låst
 			InfoElev = Converter(fsm.FetchElevatorStatus())

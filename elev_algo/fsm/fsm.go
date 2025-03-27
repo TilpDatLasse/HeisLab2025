@@ -28,8 +28,8 @@ func FsmInit() {
 }
 
 func FsmOnInitBetweenFloors() {
-	outputDevice.MotorDirection(-1)
-	elevator.Dirn = -1
+	outputDevice.MotorDirection(elev.MD_Down)
+	elevator.Dirn = elev.MD_Down
 	elevator.State = elev.MOVE
 }
 
@@ -83,6 +83,7 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 }
 
 func FsmOnFloorArrival(newFloor int) {
+	fmt.Println("arrived: ", newFloor)
 	motorTimeoutStarted = timer.Get_wall_time()
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)

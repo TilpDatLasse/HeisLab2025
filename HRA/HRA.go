@@ -12,18 +12,6 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
-// type HRAElevState struct {
-// 	Behavior    string `json:"behaviour"`
-// 	Floor       int    `json:"floor"`
-// 	Direction   string `json:"direction"`
-// 	CabRequests []bool `json:"cabRequests"`
-// }
-
-// type HRAInput struct {
-// 	HallRequests [][2]bool               `json:"hallRequests"`
-// 	States       map[string]HRAElevState `json:"states"`
-// }
-
 func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ID string) {
 
 	hraExecutable := ""
