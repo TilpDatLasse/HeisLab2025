@@ -20,7 +20,6 @@ func main() {
 		id        string
 		simPort   string
 		udpWVPort int
-		peersPort int
 	)
 
 	SingElevChans := elev_algo.SingleElevatorChans{
@@ -46,7 +45,7 @@ func main() {
 	flag.StringVar(&id, "id", "one", "id of this peer")
 	flag.StringVar(&simPort, "simPort", "15657", "simulation server port")
 	flag.IntVar(&udpWVPort, "udpVWPort", 14700, "udp worldviews port")
-	flag.IntVar(&peersPort, "peerPort", 16500, "online peers port")
+
 	flag.Parse()
 
 	go elev_algo.ElevMain(SingElevChans, SyncChans.SyncRequestSingleElev, simPort)
@@ -54,7 +53,7 @@ func main() {
 	// Sleep when initializing to make sure the elevator is ready
 	time.Sleep(3 * time.Second)
 
-	go network.NetworkMain(id, peersPort, WorldViewChans, udpWVPort)
+	go network.NetworkMain(id, WorldViewChans, udpWVPort)
 	go HRA.HRAMain(SingElevChans.SingleElevQueue, SyncChans.ShouldSync, SyncChans.InformationElevFromSync, id)
 	go worldview.SetElevatorStatus(WorldViewChans.WorldViewTxChan)
 	go worldview.WorldViewMain(WorldViewChans.WorldViewRxChan, SyncChans.SyncRequestSingleElev, SyncChans.ShouldSync, id)
@@ -91,3 +90,4 @@ func main() {
 // - write og iterate problemet
 // - hvordan fikser vi at en heis plutselig er stuck mellom to etasjer? vi må restarte den  -  her må vi få en av de andre heisene til å ta den
 // - dra ut strømmen. Heis er fortsatt online? Hra kan fortsatt gi den ordre.
+// - Teste litt mer med å dra ut nettverkskabelen

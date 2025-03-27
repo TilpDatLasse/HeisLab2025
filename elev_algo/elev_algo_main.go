@@ -6,7 +6,6 @@ import (
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/fsm"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
-	//"github.com/TilpDatLasse/HeisLab2025/nettverk"
 )
 
 type SingleElevatorChans struct {
@@ -27,7 +26,7 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 
 	if input.FloorSensor() == -1 {
 		fsm.FsmOnInitBetweenFloors()
-		fmt.Println("Dytter heisen ned til nærmeste etasje")
+		fmt.Println("Pushing Elevator down to closest floor")
 	}
 
 	go elev.PollButtons(ch.DrvButtons)

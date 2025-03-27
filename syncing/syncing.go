@@ -9,6 +9,8 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
+var SyncRequest = false
+
 type SyncChans struct {
 	ShouldSync              chan bool
 	InformationElevFromSync chan map[string]worldview.InformationElev
@@ -16,7 +18,7 @@ type SyncChans struct {
 }
 
 func SyncingMain(syncChans SyncChans) {
-	var SyncRequest = false
+
 	for {
 		SyncRequest = <-syncChans.ShouldSync
 		if SyncRequest { //syncRequest == true, request of synching recieved from HRA or other peer
