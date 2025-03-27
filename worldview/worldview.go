@@ -18,9 +18,9 @@ var (
 )
 
 var (
-	ID string
-	//ShouldSync bool = false
-	InfoElev InformationElev
+	ID         string
+	ShouldSync bool = false
+	InfoElev   InformationElev
 )
 
 var (
@@ -61,8 +61,8 @@ type WorldView struct {
 
 type InformationElev struct {
 	State        HRAElevState
-	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
-	Locked       elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
+	HallRequests [][2]elev.ConfirmationState
+	Locked       elev.ConfirmationState
 	ElevID       string
 	MotorStop    bool
 }
@@ -79,20 +79,28 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-func wvServer(wvServerChans WVServerChans) { // ha channel som input?
+func wvMapServer(wvServerChans WVServerChans) {
 	for {
 		select {
-		case wvRequest := <-wvServerChans.GetMyWorldView:
-			wvRequest.ResponseChan <- MyWorldView
-		case elevInfo := <-wvServerChans.SetMyWorldView:
-			MyWorldView.InfoMap[ID] = elevInfo
 		case wvMapRequest := <-wvServerChans.GetWorldViewMap:
 			wvMapRequest.ResponseChan <- WorldViewMap
 		case wv := <-wvServerChans.SetWorldViewMap:
 			WorldViewMap[wv.Id] = wv
 			peers.PeerToUpdate <- wv.PeerList
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(4 * time.Millisecond)
+	}
+}
+
+func wvServer(wvServerChans WVServerChans) {
+	for {
+		select {
+		case wvRequest := <-wvServerChans.GetMyWorldView:
+			wvRequest.ResponseChan <- MyWorldView
+		case elevInfo := <-wvServerChans.SetMyWorldView:
+			MyWorldView.InfoMap[ID] = elevInfo
+		}
+		time.Sleep(4 * time.Millisecond)
 	}
 }
 
@@ -103,9 +111,10 @@ func WorldViewMain(wvServerChans WVServerChans, ch_WVRx chan WorldView, ch_syncR
 	MyWorldView.PeerList.Id = ID
 
 	go wvServer(wvServerChans)
+	go wvMapServer(wvServerChans)
 
 	for {
-		wv := <-ch_WVRx //worldview mottatt
+		wv := <-ch_WVRx
 
 		if wv.Id != "" {
 
@@ -123,12 +132,12 @@ func WorldViewMain(wvServerChans WVServerChans, ch_WVRx chan WorldView, ch_syncR
 				MyWorldView.Timestamp = timer.Get_wall_time()
 				time.Sleep(20 * time.Millisecond)
 
-				//denne er egt ikke nødvendig, alle synker hele tiden uansett
-				// if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
-				// 	select {
-				// 	case ch_shouldSync <- true:
-				// 	default:
-				// 	}
+				// //denne er egt ikke nødvendig, alle synker hele tiden uansett
+				// // if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
+				// // 	select {
+				// // 	case ch_shouldSync <- true:
+				// // 	default:
+				// // 	}
 
 				// }
 			}
@@ -189,9 +198,9 @@ func SetElevatorStatus(ch_WVTx chan WorldView, wvServerChans WVServerChans) {
 		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
 		if InfoElev.Locked == 0 { //hvis ikke låst
 			InfoElev = Converter(fsm.FetchElevatorStatus())
-			// if ShouldSync {
-			// 	InfoElev.Locked = 1
-			// }
+			if ShouldSync {
+				InfoElev.Locked = 1
+			}
 		}
 		if ID != "" {
 			InfoElev.ElevID = ID
@@ -236,6 +245,7 @@ func GetMyWorldView(GetMyWorldView chan MyWVrequest) WorldView {
 	request.ResponseChan = responseChan
 	GetMyWorldView <- request
 	myWV := <-responseChan
+	responseChan = nil
 	return myWV
 }
 
@@ -246,5 +256,6 @@ func GetWorldViewMap(GetWorldViewMap chan WVMapRequest) map[string]WorldView {
 	request.ResponseChan = responseChan
 	GetWorldViewMap <- request
 	myWV := <-responseChan
+	responseChan = nil
 	return myWV
 }

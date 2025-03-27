@@ -22,8 +22,8 @@ func SyncingMain(syncChans SyncChans, getMyWorldView chan worldview.MyWVrequest,
 	for {
 		SyncRequest := <-syncChans.ShouldSync
 		if SyncRequest { //syncRequest == true, request of synching recieved from HRA
-			//worldview.ShouldSync = true
-			worldview.InfoElev.Locked = 1
+			worldview.ShouldSync = true
+			//worldview.InfoElev.Locked = 1
 			Sync(syncChans, getMyWorldView, getWorldViewMap)
 
 		} //else { //syncRequest == false, sync completed
