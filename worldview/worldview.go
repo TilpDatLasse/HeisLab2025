@@ -121,7 +121,7 @@ func WorldViewMain(wvServerChans WVServerChans, ch_WVRx chan WorldView, ch_syncR
 
 				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev, wvServerChans.GetMyWorldView, wvServerChans.GetWorldViewMap)
 				MyWorldView.Timestamp = timer.Get_wall_time()
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(20 * time.Millisecond)
 
 				//denne er egt ikke nødvendig, alle synker hele tiden uansett
 				if wv.InfoMap[wv.Id].Locked != 0 && !ShouldSync { //hvis mottar at noen vil synke for første gang
@@ -209,7 +209,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView, wvServerChans WVServerChans) {
 				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
 			}
 		}
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(40 * time.Millisecond)
 	}
 }
 

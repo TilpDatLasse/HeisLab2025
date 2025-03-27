@@ -9,9 +9,11 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/timer"
 )
 
-var elevator elev.Elevator
-var outputDevice elev.ElevatorOutputDevice
-var motorTimeoutStarted float64 = timer.Get_wall_time()
+var (
+	elevator            elev.Elevator
+	outputDevice        elev.ElevatorOutputDevice
+	motorTimeoutStarted float64 = timer.Get_wall_time()
+)
 
 func FsmInit() {
 	elevator.Config.DoorOpenDurationS = 3.0
