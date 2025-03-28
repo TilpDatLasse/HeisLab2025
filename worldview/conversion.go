@@ -4,7 +4,7 @@ import (
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 )
 
-// Converting an elev.Elevator-variabel to an InformationElev-variabel
+// Converting an elev.Elevator-type variabel to an InformationElev-type variabel
 func Converter(rawInput elev.Elevator) InformationElev {
 
 	hallRequests := make([][2]elev.ConfirmationState, len(rawInput.Requests))
@@ -45,7 +45,7 @@ func stateToString(s elev.State) string {
 	}
 }
 
-// Converting elev.MotorDirection to HRAElevState.Direction
+// Converting elev.MotorDirection to HRAElevState.Direction ("string")
 func dirnToString(s elev.MotorDirection) string {
 	switch s {
 	case elev.MD_Up:

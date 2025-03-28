@@ -8,14 +8,13 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
-var SyncRequest = false
-
 type SyncChans struct {
 	ShouldSync              chan bool
 	InformationElevFromSync chan map[string]worldview.InformationElev
 	SyncRequestSingleElev   chan [][2]elev.ConfirmationState
 }
 
+// recieves sync-requests from the HRA and starts the syncing process
 func SyncingMain(syncChans SyncChans) {
 	for {
 		worldview.ShouldSync = <-syncChans.ShouldSync
@@ -23,6 +22,7 @@ func SyncingMain(syncChans SyncChans) {
 	}
 }
 
+// gets updated WorldViewMap from the worldview-module and passes on worldview to the HRA when all are synced
 func Sync(syncChans SyncChans) {
 	for {
 		worldview.CompareAndUpdateInfoMap(syncChans.SyncRequestSingleElev)
