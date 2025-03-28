@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
 	"github.com/TilpDatLasse/HeisLab2025/elev_algo/requests"
@@ -14,16 +13,14 @@ import (
 )
 
 var (
-	elevator                  elev.Elevator
-	outputDevice              elev.ElevatorOutputDevice
-	motorTimeoutStarted       float64 = timer.Get_wall_time()
-	ObstructionTimeoutStarted float64 = timer.Get_wall_time()
-	ID                        string
+	elevator     elev.Elevator
+	outputDevice elev.ElevatorOutputDevice
+	ID           string
 )
 
 func FsmInit(id string) {
 	elevator = elev.Elevator{}
-	elevator.Config.DoorOpenDurationS = 3.0 // Default value
+	elevator.Config.DoorOpenDurationS = 3.0
 	elevator.Config.ClearRequestVariant = elev.CV_InDirn
 	outputDevice = elev.Elevio_getOutputDevice()
 	outputDevice.MotorDirection(0)
@@ -48,7 +45,7 @@ func FsmOnRequestButtonPress(btnFloor int, btnType int) {
 		FsmOrderInList(btnFloor, btnType, true)
 	} else {
 		elevator.Requests[btnFloor][btnType] = 1
-		setAllLights(elevator)
+		setAllLights()
 	}
 }
 
@@ -58,18 +55,7 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 		return
 	}
 	switch elevator.State {
-	// case elev.DOOROPEN:
-	// 	if requests.ShouldClearImmediately(elevator, btnFloor, btnType) {
-	// 		outputDevice.DoorLight(true)
-	// 		timer.Timer_start(elevator.Config.DoorOpenDurationS)
-	// 		elevator.OwnRequests[btnFloor][btnType] = false
-	// 		elevator.Requests[btnFloor][btnType] = 0
-	// 		fmt.Println("DEBUG 1")
 
-	// 		FsmOnDoorTimeout()
-	// 	} else {
-	// 		elevator.OwnRequests[btnFloor][btnType] = true
-	// 	}
 	case elev.MOVE:
 		elevator.OwnRequests[btnFloor][btnType] = true
 	case elev.IDLE:
@@ -89,7 +75,7 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 		}
 	}
 
-	setAllLights(elevator)
+	setAllLights()
 }
 
 func FsmOnFloorArrival(newFloor int) {
@@ -104,7 +90,7 @@ func FsmOnFloorArrival(newFloor int) {
 		elevator = requests.ClearAtCurrentFloor(elevator)
 		SaveCabOrders()
 		timer.Timer_start(elevator.Config.DoorOpenDurationS)
-		setAllLights(elevator)
+		setAllLights()
 		elevator.State = elev.DOOROPEN
 	}
 }
@@ -120,7 +106,7 @@ func FsmOnDoorTimeout() {
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
 			elevator = requests.ClearAtCurrentFloor(elevator)
 			SaveCabOrders()
-			setAllLights(elevator)
+			setAllLights()
 		case elev.MOVE, elev.IDLE:
 			outputDevice.DoorLight(false)
 			outputDevice.MotorDirection(elev.MotorDirection(elevator.Dirn))
@@ -140,10 +126,10 @@ func FlipObs() {
 	elevator.Obs = !elevator.Obs
 }
 
-func setAllLights(e elev.Elevator) { //trenger egt ikke ta inn elevator her, er global
+func setAllLights() {
 	for floor := 0; floor < elev.N_FLOORS; floor++ {
 		for btn := 0; btn < elev.N_BUTTONS; btn++ {
-			outputDevice.RequestButtonLight(elev.ButtonType(btn), floor, e.Requests[floor][btn])
+			outputDevice.RequestButtonLight(elev.ButtonType(btn), floor, elevator.Requests[floor][btn])
 		}
 	}
 }
@@ -158,94 +144,16 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her m�
 			list := make([]elev.ConfirmationState, 2)
 			list[0] = hallRequests[i][j]
 			list[1] = elevator.Requests[i][j]
-			//fmt.Println("LISTE: ", list)
 			elevator.Requests[i][j] = elev.CyclicUpdate(list, false)
 			if elevator.Requests[i][j] == 2 && hallRequests[i][j] != 2 {
 				elevator.Requests[i][j] = 1
 			}
 			if list[1] == 2 && elevator.Requests[i][j] == 0 {
 				fmt.Println("--------------------- Order deleted -----------------------")
-				fmt.Println("list[0]:", list[0], list[1])
 			}
 		}
 	}
-	setAllLights(elevator)
-}
-
-func MotorTimeout() {
-	var prevState elev.State = elev.IDLE
-	timeout_time := 4.0
-
-	for {
-		if (elevator.State == elev.MOVE) && (elevator.State != prevState) {
-			motorTimeoutStarted = timer.Get_wall_time()
-
-		}
-		if (elevator.State == elev.MOVE) && (prevState == elev.MOVE) && ((motorTimeoutStarted + timeout_time) < timer.Get_wall_time()) {
-			fmt.Println("---------------------Motor timeout----------------------------")
-			elevator.MotorStop = true
-			RestartElevator()
-			go ifPowerloss()
-			motorTimeoutStarted = timer.Get_wall_time()
-		}
-
-		prevState = elevator.State
-
-		time.Sleep(200 * time.Millisecond)
-
-	}
-
-}
-
-func ifPowerloss() {
-
-	for elevator.MotorStop {
-		if elev.GetFloor() == -1 {
-			FsmOnInitBetweenFloors()
-		} else {
-			FsmInit(ID)
-			motorTimeoutStarted = timer.Get_wall_time()
-		}
-		fmt.Println("motorstop = ", elevator.MotorStop)
-		time.Sleep(2 * time.Second)
-	}
-}
-
-func RestartElevator() { // må vel egt implementere at den sier ifra at den ikke er tilgjengelig
-	outputDevice.MotorDirection(elev.MD_Stop)
-	for i := 0; i < 300; i++ {
-		time.Sleep(10 * time.Millisecond)
-		outputDevice.MotorDirection(elev.MD_Stop)
-	}
-	fmt.Println("Starter heismotor på nytt, går videre")
-	elevator.State = elev.IDLE
-
-}
-
-func ObstructionTimeout() {
-	var prevObstructionState bool = false
-	timeout_time := 6.0
-
-	for {
-		if elevator.Obs && (elevator.Obs != prevObstructionState) {
-			ObstructionTimeoutStarted = timer.Get_wall_time()
-
-		}
-		if elevator.Obs && prevObstructionState && ((motorTimeoutStarted + timeout_time) < timer.Get_wall_time()) {
-			fmt.Println("---------------------Obstruction timeout----------------------------")
-			elevator.ObstructionFailure = true
-			ObstructionTimeoutStarted = timer.Get_wall_time()
-		}
-		if !elevator.Obs {
-			elevator.ObstructionFailure = false
-		}
-
-		prevObstructionState = elevator.Obs
-
-		time.Sleep(200 * time.Millisecond)
-
-	}
-
+	setAllLights()
 }
 
 func SaveCabOrders() {
@@ -253,35 +161,30 @@ func SaveCabOrders() {
 
 	orderstring := ""
 	for i := 0; i < len(elevator.Requests); i++ {
-		order := elevator.Requests[i][2] // Assuming the 3rd column holds boolean values
+		order := elevator.Requests[i][2]
 		list[i] = order
 
 	}
 	list2 := cabToBool(list)
 	for i := 0; i < len(list2); i++ {
-		order := list2[i] // Assuming the 3rd column holds boolean values
+		order := list2[i]
 		str := strconv.FormatBool(order)
 
 		orderstring += (str + " ")
 	}
-
-	// Åpner filen for skriving, oppretter den hvis den ikke finnes
 	filename := ID + ".txt"
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println("Feil ved oppretting av fil:", err)
+		fmt.Println("An error occured while opening the file", err)
 		return
 	}
 	defer file.Close()
 
-	// Skriver innhold til filen
 	_, err = file.WriteString(orderstring)
 	if err != nil {
-		fmt.Println("Feil ved skriving til fil:", err)
+		fmt.Println("Error while writing to file: ", err)
 		return
 	}
-
-	fmt.Println("Tekst skrevet til fil!")
 }
 
 func GetCabOrders() {
@@ -293,13 +196,11 @@ func GetCabOrders() {
 	}
 	defer file.Close()
 
-	// Read the first line
 	scanner := bufio.NewScanner(file)
 	if scanner.Scan() {
-		line := scanner.Text()        // Read the line as a string
-		words := strings.Fields(line) // Split by whitespace
+		line := scanner.Text()
+		words := strings.Fields(line)
 
-		// Convert to boolean values
 		var bools []bool
 		for _, word := range words {
 			value, err := strconv.ParseBool(word)
@@ -313,28 +214,20 @@ func GetCabOrders() {
 		CabRequests := boolToConfirmationState(bools)
 		for i := 0; i < len(CabRequests); i++ {
 			elevator.Requests[i][2] = CabRequests[i]
-			// Assuming the 3rd column holds boolean values
 
 		}
 		for i := 0; i < len(bools); i++ {
 			elevator.OwnRequests[i][2] = bools[i]
-			// Assuming the 3rd column holds boolean values
 
 		}
-		// Print the parsed boolean values
 		for i := 0; i < len(elevator.OwnRequests); i++ {
 			if elevator.OwnRequests[i][2] {
 				FsmOrderInList(i, 2, true)
 			}
 
-			// Assuming the 3rd column holds boolean values
-
 		}
-
-		fmt.Println("Parsed booleans:", bools)
 	}
 
-	// Check for any scanning errors
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
 	}
