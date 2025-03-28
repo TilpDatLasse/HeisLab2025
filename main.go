@@ -45,7 +45,6 @@ func main() {
 	flag.StringVar(&id, "id", "one", "id of this peer")
 	flag.StringVar(&simPort, "simPort", "15657", "simulation server port")
 	flag.IntVar(&udpWVPort, "udpVWPort", 14700, "udp worldviews port")
-
 	flag.Parse()
 
 	go elev_algo.ElevMain(SingElevChans, SyncChans.SyncRequestSingleElev, simPort, id)
