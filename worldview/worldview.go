@@ -18,7 +18,7 @@ var (
 )
 
 var (
-	ID         string //Id of local peer
+	ID         string 
 	ShouldSync bool   = false
 	InfoElev   InformationElev
 )
@@ -73,16 +73,15 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	MyWorldView.PeerList.Id = ID
 
 	for {
-		wv := <-ch_WVRx //worldview mottatt
-
+		wv := <-ch_WVRx 
 		if wv.Id != "" {
 			WVMapMutex.Lock()
-			WorldViewMap[wv.Id] = wv //oppdaterer wvmap med dens info
+			WorldViewMap[wv.Id] = wv 
 			peers.PeerToUpdate <- wv.PeerList
 			WVMapMutex.Unlock()
-			if wv.Id != ID { //noen andre sendte
+			if wv.Id != ID { 
 				InfoMapMutex.Lock()
-				InfoMap[wv.Id] = wv.InfoMap[wv.Id] //oppdaterer infoen den sendte om seg selv
+				InfoMap[wv.Id] = wv.InfoMap[wv.Id] 
 				InfoMapMutex.Unlock()
 				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
 				MyWorldView.Timestamp = timer.Get_wall_time()
@@ -98,7 +97,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 		peers.PeerToUpdate <- MyWorldView.PeerList
 		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
 		hasObstructionFailure := Converter(fsm.FetchElevatorStatus()).ObstructionFailure
-		if InfoElev.Locked == 0 { //hvis ikke låst
+		if InfoElev.Locked == 0 { 
 			InfoElev = Converter(fsm.FetchElevatorStatus())
 			if ShouldSync {
 				InfoElev.Locked = 1
@@ -130,7 +129,6 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 // Comparing info from the different peers to check if we can update the cyclic counters
 func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	wasTimedOut := wasTimedOut()
-
 	infoMap := deepCopyWV(MyWorldView).InfoMap
 	if len(infoMap) != 0 {
 
@@ -155,7 +153,6 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 				}
 			}
 		}
-
 		// Comparing the Locked-attribute
 		listOfElev := make([]elev.ConfirmationState, len(infoMap))
 		k := 0
@@ -164,13 +161,11 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 			k++
 		}
 		update := elev.CyclicUpdate(listOfElev, wasTimedOut)
-
 		InfoElev.Locked = update
 		InfoMapMutex.Lock()
 		InfoMap[ID] = InfoElev
 		infoMap[ID] = InfoElev
 		InfoMapMutex.Unlock()
-
 	}
 	select {
 	case ch_syncRequestsSingleElev <- infoMap[ID].HallRequests:
@@ -220,11 +215,9 @@ func deepCopyWV(original WorldView) WorldView {
 
 // makes a deep copy of a WorldViewMap-type
 func DeepCopyWVMap(original map[string]WorldView) map[string]WorldView {
-	//WVMapMutex.Lock()
 	copy := make(map[string]WorldView)
 	for key, value := range original {
 		copy[key] = deepCopyWV(value)
 	}
-	//WVMapMutex.Unlock()
 	return copy
 }
