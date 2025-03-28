@@ -22,7 +22,7 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 	fsm.FsmInit(id)
 	input := elev.Elevio_getInputDevice()
 
-	if input.FloorSensor() == -1 {
+	if input.FloorSensor() == -1 { // If elevator is between floors
 		fsm.FsmOnInitBetweenFloors()
 		fmt.Println("Pushing Elevator down to closest floor")
 	}
@@ -37,21 +37,21 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 
 	for {
 		select {
-		case a := <-ch.DrvButtons:
+		case a := <-ch.DrvButtons: // Button press
 			fsm.FsmOnRequestButtonPress(a.Floor, int(a.Button))
 			fsm.SaveCabOrders()
 
-		case a := <-ch.DrvFloors:
+		case a := <-ch.DrvFloors: // Floor arrival
 			fsm.FsmOnFloorArrival(a)
 
-		case <-ch.TimerChannel:
+		case <-ch.TimerChannel: // Timer timeout (door close)
 			timer.Timer_stop()
 			fsm.FsmOnDoorTimeout()
 
-		case <-ch.DrvObstr:
+		case <-ch.DrvObstr: // Obstruction switch
 			fsm.FlipObs()
 
-		case a := <-ch.DrvStop:
+		case a := <-ch.DrvStop: // Stop button
 			if a {
 				fsm.FsmStop()
 			}
@@ -59,14 +59,14 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 				fsm.FsmAfterStop()
 			}
 
-		case outputHRA := <-ch.SingleElevQueue:
+		case outputHRA := <-ch.SingleElevQueue: // Hall requests for HRA
 			for f, floor := range outputHRA {
 				for d, isOrder := range floor {
 					fsm.FsmOrderInList(f, d, isOrder)
 				}
 			}
 
-		case hallRequest := <-ch_syncRequestsSingleElev:
+		case hallRequest := <-ch_syncRequestsSingleElev: //Update hall requests
 			fsm.UpdateHallrequests(hallRequest)
 		}
 	}

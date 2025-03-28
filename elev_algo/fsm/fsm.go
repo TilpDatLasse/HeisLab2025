@@ -66,7 +66,6 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 		case elev.DOOROPEN:
 			outputDevice.DoorLight(true)
 			timer.Timer_start(elevator.Config.DoorOpenDurationS)
-			fmt.Println("DEBUG 2")
 			FsmOnDoorTimeout()
 			elevator = requests.ClearAtCurrentFloor(elevator)
 			SaveCabOrders()
@@ -79,7 +78,6 @@ func FsmOrderInList(btnFloor int, btnType int, isOrder bool) {
 }
 
 func FsmOnFloorArrival(newFloor int) {
-	fmt.Println("arrived: ", newFloor)
 	motorTimeoutStarted = timer.Get_wall_time()
 	elevator.Floor = newFloor
 	outputDevice.FloorIndicator(elevator.Floor)
@@ -138,7 +136,7 @@ func FetchElevatorStatus() elev.Elevator {
 	return elevator
 }
 
-func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her m√• vi ha cyclicupdate
+func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) {
 	for i := 0; i < len(hallRequests); i++ { //for every floor
 		for j := 0; j < 2; j++ { //and every button
 			list := make([]elev.ConfirmationState, 2)
@@ -149,13 +147,14 @@ func UpdateHallrequests(hallRequests [][2]elev.ConfirmationState) { // yo her m√
 				elevator.Requests[i][j] = 1
 			}
 			if list[1] == 2 && elevator.Requests[i][j] == 0 {
-				fmt.Println("--------------------- Order deleted -----------------------")
+				fmt.Println("--------------------- Order deleted -----------------------") //Is printed when a different peer clears an order
 			}
 		}
 	}
 	setAllLights()
 }
 
+// Saves the cab orders to a txt-file
 func SaveCabOrders() {
 	list := make([]elev.ConfirmationState, 4)
 
@@ -187,6 +186,7 @@ func SaveCabOrders() {
 	}
 }
 
+// Gets the cab orders from a txt-file
 func GetCabOrders() {
 	filename := ID + ".txt"
 	file, err := os.Open(filename)
@@ -233,6 +233,7 @@ func GetCabOrders() {
 	}
 }
 
+// Converts a list of ConfirmationStates to a list of bools
 func cabToBool(list []elev.ConfirmationState) []bool {
 	boolList := make([]bool, len(list))
 	for i, v := range list {
@@ -241,6 +242,7 @@ func cabToBool(list []elev.ConfirmationState) []bool {
 	return boolList
 }
 
+// Converts a list of bools to a list of ConfirmationStates
 func boolToConfirmationState(list []bool) []elev.ConfirmationState {
 	stateList := make([]elev.ConfirmationState, len(list))
 	for i, v := range list {

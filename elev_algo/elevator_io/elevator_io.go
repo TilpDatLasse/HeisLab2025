@@ -9,10 +9,12 @@ import (
 
 const _pollRate = 20 * time.Millisecond
 
-var _initialized bool = false
-var _numFloors int = 4
-var _mtx sync.Mutex
-var _conn net.Conn
+var (
+	_initialized bool = false
+	_numFloors   int  = 4
+	_mtx         sync.Mutex
+	_conn        net.Conn
+)
 
 type MotorDirection int
 
@@ -290,7 +292,7 @@ func toBool(a byte) bool {
 	return b
 }
 
-// updating ConfirmationState
+// updating ConfirmationState used as cyclic counter so no orders are lost
 func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState {
 	isPresent := map[ConfirmationState]bool{}
 	for _, v := range list {
