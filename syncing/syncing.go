@@ -5,19 +5,19 @@ import (
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/worldview"
+	wv "github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
 type SyncChans struct {
 	ShouldSync              chan bool
-	InformationElevFromSync chan map[string]worldview.InformationElev
+	InformationElevFromSync chan map[string]wv.InformationElev
 	SyncRequestSingleElev   chan [][2]elev.ConfirmationState
 }
 
 // recieves sync-requests from the HRA and starts the syncing process
 func SyncingMain(syncChans SyncChans) {
 	for {
-		worldview.ShouldSync = <-syncChans.ShouldSync
+		wv.ShouldSync = <-syncChans.ShouldSync
 		Sync(syncChans)
 	}
 }
@@ -25,14 +25,14 @@ func SyncingMain(syncChans SyncChans) {
 // gets updated WorldViewMap from the worldview-module and passes on worldview to the HRA when all are synced
 func Sync(syncChans SyncChans) {
 	for {
-		worldview.CompareAndUpdateInfoMap(syncChans.SyncRequestSingleElev)
-		worldview.WVMapMutex.Lock()
-		WVMapCopy := worldview.DeepCopyWVMap(worldview.WorldViewMap)
-		worldview.WVMapMutex.Unlock()
+		wv.CompareAndUpdateInfoMap(syncChans.SyncRequestSingleElev)
+		wv.WVMapMutex.Lock()
+		WVMapCopy := wv.DeepCopyWVMap(wv.WorldViewMap)
+		wv.WVMapMutex.Unlock()
 		if AllWorldViewsEqual(WVMapCopy) {
-			syncChans.InformationElevFromSync <- WVMapCopy[worldview.ID].InfoMap
-			worldview.ShouldSync = false
-			worldview.InfoElev.Locked = 0
+			syncChans.InformationElevFromSync <- WVMapCopy[wv.ID].InfoMap
+			wv.ShouldSync = false
+			wv.InfoElev.Locked = 0
 			break
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -40,8 +40,8 @@ func Sync(syncChans SyncChans) {
 }
 
 // Compares the worldviews of all peers
-func AllWorldViewsEqual(worldViewMap map[string]worldview.WorldView) bool {
-	var reference worldview.WorldView
+func AllWorldViewsEqual(worldViewMap map[string]wv.WorldView) bool {
+	var reference wv.WorldView
 	isFirst := true
 
 	for _, worldView := range worldViewMap {
@@ -56,7 +56,7 @@ func AllWorldViewsEqual(worldViewMap map[string]worldview.WorldView) bool {
 	}
 
 	// Checks if all peers have locked their worldview information before synching
-	wv := worldViewMap[worldview.ID]
+	wv := worldViewMap[wv.ID]
 	for _, elev := range wv.InfoMap {
 		if elev.Locked != 2 {
 			return false

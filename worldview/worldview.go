@@ -92,7 +92,6 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	}
 }
 
-
 // Getting the worldview of the local elevator and sending on channel to udp-broadcast
 func SetElevatorStatus(ch_WVTx chan WorldView) {
 	for {
