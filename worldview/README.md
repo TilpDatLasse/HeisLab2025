@@ -15,3 +15,9 @@ The `WorldView`-type holds a map of elements of type `InformationElev` which eac
 
 The global variable `WorldViewMap` holds the worldview of every connected peer as a map indexed with the peers' IDs as keys. It is this map that is compared for all peers by the `syncing`-module.
 
+`WorldViewMain()` Updates the local peer's worldview with the information recieved from other peers on the network.
+
+`SetElevatorStatus()` runs as a gorutine, regularly fetching the status of the local elevator and passing it on to be broadcasted. 
+
+`CompareAndUpdateInfoMap()` compares information for all peers and the cyclic counter variables of type `ConfirmationState` if possible. The cyclic counter ensures orders are registerd by all peers before they are confirmed. Correspondingly, an order can not be deleted before it is confirmed by all peers, ensuring no calls are lost.
+

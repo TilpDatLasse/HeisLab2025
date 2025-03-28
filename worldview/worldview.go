@@ -18,8 +18,8 @@ var (
 )
 
 var (
-	ID         string  //Id of local peer
-	ShouldSync bool = false
+	ID         string //Id of local peer
+	ShouldSync bool   = false
 	InfoElev   InformationElev
 )
 
@@ -46,8 +46,8 @@ type WorldView struct {
 
 type InformationElev struct {
 	State              HRAElevState
-	HallRequests       [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
-	Locked             elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
+	HallRequests       [][2]elev.ConfirmationState
+	Locked             elev.ConfirmationState
 	ElevID             string
 	MotorStop          bool
 	ObstructionFailure bool
@@ -89,6 +89,42 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 				time.Sleep(10 * time.Millisecond)
 			}
 		}
+	}
+}
+
+
+// Getting the worldview of the local elevator and sending on channel to udp-broadcast
+func SetElevatorStatus(ch_WVTx chan WorldView) {
+	for {
+		peers.PeerToUpdate <- MyWorldView.PeerList
+		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
+		hasObstructionFailure := Converter(fsm.FetchElevatorStatus()).ObstructionFailure
+		if InfoElev.Locked == 0 { //hvis ikke låst
+			InfoElev = Converter(fsm.FetchElevatorStatus())
+			if ShouldSync {
+				InfoElev.Locked = 1
+			}
+		}
+		if ID != "" {
+			InfoElev.ElevID = ID
+			InfoMapMutex.Lock()
+			InfoMap[ID] = InfoElev
+			InfoMapMutex.Unlock()
+			MyWorldView.InfoMap = InfoMap
+			WVMapMutex.Lock()
+			WorldViewMap[ID] = MyWorldView
+			WVMapMutex.Unlock()
+			if hasMotorStopped || hasObstructionFailure {
+				continue
+			}
+
+			select {
+			case ch_WVTx <- deepCopyWV(MyWorldView):
+			default:
+				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
+			}
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 
@@ -143,42 +179,7 @@ func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.Confirmati
 	}
 }
 
-// henter status fra heisen og sender på channel som en informationElev-variabel
-// Getting the status of the local elevator and sending on wv-channel
-func SetElevatorStatus(ch_WVTx chan WorldView) {
-	for {
-		peers.PeerToUpdate <- MyWorldView.PeerList
-		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
-		hasObstructionFailure := Converter(fsm.FetchElevatorStatus()).ObstructionFailure
-		if InfoElev.Locked == 0 { //hvis ikke låst
-			InfoElev = Converter(fsm.FetchElevatorStatus())
-			if ShouldSync {
-				InfoElev.Locked = 1
-			}
-		}
-		if ID != "" {
-			InfoElev.ElevID = ID
-			InfoMapMutex.Lock()
-			InfoMap[ID] = InfoElev
-			InfoMapMutex.Unlock()
-			MyWorldView.InfoMap = InfoMap
-			WVMapMutex.Lock()
-			WorldViewMap[ID] = MyWorldView
-			WVMapMutex.Unlock()
-			if hasMotorStopped || hasObstructionFailure {
-				continue
-			}
-
-			select {
-			case ch_WVTx <- deepCopyWV(MyWorldView):
-			default:
-				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
-			}
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
-}
-
+// Checks if a peer has been offline, and may have outdated information
 func wasTimedOut() bool {
 	var timeOut float64 = 1.0
 	var keyList []string
@@ -201,6 +202,7 @@ func wasTimedOut() bool {
 	return maxDiff > timeOut
 }
 
+// Makes a deep copy of a WorldView-type
 func deepCopyWV(original WorldView) WorldView {
 	InfoMapMutex.Lock()
 	copyMap := make(map[string]InformationElev)
@@ -217,6 +219,7 @@ func deepCopyWV(original WorldView) WorldView {
 	return copy
 }
 
+// makes a deep copy of a WorldViewMap-type
 func DeepCopyWVMap(original map[string]WorldView) map[string]WorldView {
 	//WVMapMutex.Lock()
 	copy := make(map[string]WorldView)
