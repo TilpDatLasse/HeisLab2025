@@ -18,7 +18,7 @@ var (
 )
 
 var (
-	ID         string
+	ID         string  //Id of local peer
 	ShouldSync bool = false
 	InfoElev   InformationElev
 )
@@ -46,8 +46,8 @@ type WorldView struct {
 
 type InformationElev struct {
 	State        HRAElevState
-	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
-	Locked       elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
+	HallRequests [][2]elev.ConfirmationState 
+	Locked       elev.ConfirmationState     
 	ElevID       string
 	MotorStop    bool
 }
@@ -64,6 +64,7 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
+// Updates worldview with relevant recieved information
 func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_shouldSync chan bool, id string) {
 	ID = id
 	MyWorldView.Id = ID
@@ -94,9 +95,7 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 func CompareAndUpdateInfoMap(ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState) {
 	wasTimedOut := wasTimedOut()
 
-	//InfoMapMutex.Lock()
 	infoMap := deepCopyWV(MyWorldView).InfoMap
-	//InfoMapMutex.Unlock()
 	if len(infoMap) != 0 {
 
 		//Comparing hallrequests
