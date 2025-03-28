@@ -15,7 +15,7 @@ type PeerUpdate struct {
 
 const (
 	interval = 15 * time.Millisecond
-	timeout  = 5000 * time.Millisecond // 5 seconds to determine if peer is lost or not (packetloss crucial)
+	timeout  = 5000 * time.Millisecond // 5 seconds to determine if a peer is lost or not (packetloss crucial)
 )
 
 var (

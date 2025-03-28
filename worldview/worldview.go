@@ -65,7 +65,7 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-// Updates worldview with relevant recieved information
+// Updates worldview with relevant received information
 func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]elev.ConfirmationState, ch_shouldSync chan bool, id string) {
 	ID = id
 	MyWorldView.Id = ID

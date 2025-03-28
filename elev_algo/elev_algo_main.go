@@ -59,7 +59,7 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 				fsm.FsmAfterStop()
 			}
 
-		case outputHRA := <-ch.SingleElevQueue: // Hall requests for HRA
+		case outputHRA := <-ch.SingleElevQueue: // Hall requests from HRA
 			for f, floor := range outputHRA {
 				for d, isOrder := range floor {
 					fsm.FsmOrderInList(f, d, isOrder)

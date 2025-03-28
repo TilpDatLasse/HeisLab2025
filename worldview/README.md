@@ -1,7 +1,7 @@
 Worldview Module
 ================
 
-The worldview module manages the shared elevator state across all peers. It collects elevator status data, synchronizes it with other peers, and ensures consistency despite network delays or failures. Each peer continuously updates its local elevator status, an the peers exchange their worldviews to maintain a consistent state.
+The worldview module manages the shared elevator state across all peers. It collects elevator status data, synchronizes it with other peers, and ensures consistency despite network delays or failures. Each peer continuously updates its local elevator status, and the peers exchange their worldviews to maintain a consistent state.
 
 The worldview module manages the shared elevator information across all peers. It collects elevator information from all peers and stores it as its own worldview. The module is an important part of the overall synchronization between peers and ensures consistency despite network delays or failures.
 
@@ -25,6 +25,6 @@ Important functions:
 
 *Cyclic counter*: Ensures orders are registerd by all peers before they are confirmed. Correspondingly, an order can not be deleted before it is confirmed by all peers, ensuring no calls are lost. A ConfirmationState-type variable can only be updated as shown below:
 
-`noCall` -> `unConfirmed` -> `confirmed` -> `noCall`
+`NoCall` -> `UnConfirmed` -> `Confirmed` -> `NoCall`
 
 This way, there should never be any doubt whether an order has been taken or just not been registerd yet. 

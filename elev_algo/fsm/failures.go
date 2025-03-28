@@ -47,7 +47,6 @@ func ifPowerloss() {
 			FsmInit(ID)
 			motorTimeoutStarted = timer.Get_wall_time()
 		}
-		fmt.Println("motorstop = ", elevator.MotorStop)
 		time.Sleep(2 * time.Second)
 	}
 }
@@ -58,7 +57,7 @@ func RestartElevator() {
 		time.Sleep(10 * time.Millisecond)
 		outputDevice.MotorDirection(elev.MD_Stop)
 	}
-	fmt.Println("Starter heismotor på nytt, går videre")
+	fmt.Println("Trying to restart motor")
 	elevator.State = elev.IDLE
 
 }
