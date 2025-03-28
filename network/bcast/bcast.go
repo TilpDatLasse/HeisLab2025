@@ -9,11 +9,10 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/network/conn"
 )
 
-const bufSize = 2048
+const bufSize = 2048 // Large because we don't want to lose data and we send big packets
 
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
 // it on `port`
-
 func Transmitter(port int, chans ...interface{}) {
 
 	checkArgs(chans...)

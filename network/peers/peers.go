@@ -1,6 +1,7 @@
 package peers
 
 import (
+	"fmt"
 	"sort"
 	"time"
 )
@@ -9,12 +10,12 @@ type PeerUpdate struct {
 	Peers []string
 	New   string
 	Lost  []string
-	Id    string //mulig dette ikke går
+	Id    string
 }
 
 const (
 	interval = 15 * time.Millisecond
-	timeout  = 5000 * time.Millisecond
+	timeout  = 5000 * time.Millisecond // 5 seconds to determine if peer is lost or not (packetloss crucial)
 )
 
 var (
@@ -62,4 +63,13 @@ func UpdatePeers() {
 			PeerFromUpdate <- p
 		}
 	}
+}
+
+func PrintPeerUpdate(pUpdate PeerUpdate) {
+
+	fmt.Printf("Peer update:\n")
+	fmt.Printf("  Peers:    %q\n", pUpdate.Peers)
+	fmt.Printf("  New:      %q\n", pUpdate.New)
+	fmt.Printf("  Lost:     %q\n", pUpdate.Lost)
+
 }
