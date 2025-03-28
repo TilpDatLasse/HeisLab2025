@@ -71,7 +71,7 @@ func ObstructionTimeout() {
 			ObstructionTimeoutStarted = timer.Get_wall_time()
 
 		}
-		if elevator.Obs && prevObstructionState && ((motorTimeoutStarted + timeout_time) < timer.Get_wall_time()) {
+		if elevator.Obs && prevObstructionState && ((ObstructionTimeoutStarted + timeout_time) < timer.Get_wall_time()) {
 			fmt.Println("---------------------Obstruction timeout----------------------------")
 			elevator.ObstructionFailure = true
 			ObstructionTimeoutStarted = timer.Get_wall_time()
