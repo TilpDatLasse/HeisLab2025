@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	elevator            elev.Elevator
-	outputDevice        elev.ElevatorOutputDevice
-	motorTimeoutStarted float64 = timer.Get_wall_time()
-	ID                  string
+	elevator                  elev.Elevator
+	outputDevice              elev.ElevatorOutputDevice
+	motorTimeoutStarted       float64 = timer.Get_wall_time()
+	ObstructionTimeoutStarted float64 = timer.Get_wall_time()
+	ID                        string
 )
 
 func FsmInit(id string) {
@@ -30,6 +31,7 @@ func FsmInit(id string) {
 	elevator.State = elev.IDLE
 	elevator.Obs = false
 	elevator.MotorStop = false
+	elevator.ObstructionFailure = false
 	ID = id
 	GetCabOrders()
 }
@@ -217,6 +219,32 @@ func RestartElevator() { // må vel egt implementere at den sier ifra at den ikk
 	}
 	fmt.Println("Starter heismotor på nytt, går videre")
 	elevator.State = elev.IDLE
+
+}
+
+func ObstructionTimeout() {
+	var prevObstructionState bool = false
+	timeout_time := 6.0
+
+	for {
+		if elevator.Obs && (elevator.Obs != prevObstructionState) {
+			ObstructionTimeoutStarted = timer.Get_wall_time()
+
+		}
+		if elevator.Obs && prevObstructionState && ((motorTimeoutStarted + timeout_time) < timer.Get_wall_time()) {
+			fmt.Println("---------------------Obstruction timeout----------------------------")
+			elevator.ObstructionFailure = true
+			ObstructionTimeoutStarted = timer.Get_wall_time()
+		}
+		if !elevator.Obs {
+			elevator.ObstructionFailure = false
+		}
+
+		prevObstructionState = elevator.Obs
+
+		time.Sleep(200 * time.Millisecond)
+
+	}
 
 }
 

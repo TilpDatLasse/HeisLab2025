@@ -9,7 +9,7 @@ import (
 	"github.com/TilpDatLasse/HeisLab2025/network/conn"
 )
 
-const bufSize = 1024
+const bufSize = 2048
 
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
 // it on `port`
