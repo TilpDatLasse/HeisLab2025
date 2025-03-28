@@ -18,7 +18,7 @@ var (
 )
 
 var (
-	ID         string //Id of local peer
+	ID         string 
 	ShouldSync bool   = false
 	InfoElev   InformationElev
 )
