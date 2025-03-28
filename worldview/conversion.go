@@ -16,8 +16,9 @@ func Converter(rawInput elev.Elevator) InformationElev {
 	}
 
 	input := InformationElev{
-		HallRequests: hallRequests,
-		MotorStop:    rawInput.MotorStop,
+		HallRequests:       hallRequests,
+		MotorStop:          rawInput.MotorStop,
+		ObstructionFailure: rawInput.ObstructionFailure,
 		State: HRAElevState{
 			Behavior:    stateToString(rawInput.State),
 			Floor:       rawInput.Floor,

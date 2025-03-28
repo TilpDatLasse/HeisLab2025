@@ -32,6 +32,7 @@ func ElevMain(ch SingleElevatorChans, ch_syncRequestsSingleElev chan [][2]elev.C
 	go elev.PollObstructionSwitch(ch.DrvObstr)
 	go elev.PollStopButton(ch.DrvStop)
 	go fsm.MotorTimeout()
+	go fsm.ObstructionTimeout()
 	go timer.Time(ch.TimerChannel)
 
 	for {

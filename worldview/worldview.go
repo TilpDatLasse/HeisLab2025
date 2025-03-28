@@ -45,11 +45,12 @@ type WorldView struct {
 }
 
 type InformationElev struct {
-	State        HRAElevState
-	HallRequests [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
-	Locked       elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
-	ElevID       string
-	MotorStop    bool
+	State              HRAElevState
+	HallRequests       [][2]elev.ConfirmationState // denne skal deles med alle peers, så alle vet hvilke ordre som er aktive
+	Locked             elev.ConfirmationState      // Når denne er !=0 skal ikke lenger info hentes fra elev-modulen
+	ElevID             string
+	MotorStop          bool
+	ObstructionFailure bool
 }
 
 type HRAElevState struct {
@@ -149,6 +150,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 	for {
 		peers.PeerToUpdate <- MyWorldView.PeerList
 		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
+		hasObstructionFailure := Converter(fsm.FetchElevatorStatus()).ObstructionFailure
 		if InfoElev.Locked == 0 { //hvis ikke låst
 			InfoElev = Converter(fsm.FetchElevatorStatus())
 			if ShouldSync {
@@ -164,7 +166,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 			WVMapMutex.Lock()
 			WorldViewMap[ID] = MyWorldView
 			WVMapMutex.Unlock()
-			if hasMotorStopped {
+			if hasMotorStopped || hasObstructionFailure {
 				continue
 			}
 

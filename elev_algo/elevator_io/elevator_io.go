@@ -18,15 +18,16 @@ type MotorDirection int
 
 const (
 	MD_Up   MotorDirection = 1
-	MD_Down                = -1
-	MD_Stop                = 0
+	MD_Down MotorDirection = -1
+	MD_Stop MotorDirection = 0
 )
 
 type ButtonType int
+
 const (
 	BT_HallUp   ButtonType = 0
-	BT_HallDown            = 1
-	BT_Cab                 = 2
+	BT_HallDown ButtonType = 1
+	BT_Cab      ButtonType = 2
 )
 
 type ButtonEvent struct {
@@ -59,21 +60,22 @@ type State int
 
 const (
 	INIT     State = 0
-	IDLE           = 1
-	MOVE           = 2
-	STOP           = 3
-	DOOROPEN       = 4
+	IDLE     State = 1
+	MOVE     State = 2
+	STOP     State = 3
+	DOOROPEN State = 4
 )
 
 type Elevator struct {
-	Floor       int
-	Dirn        MotorDirection
-	State       State
-	Requests    [N_FLOORS][N_BUTTONS]ConfirmationState
-	OwnRequests [N_FLOORS][N_BUTTONS]bool
-	Config      ElevatorConfig
-	Obs         bool
-	MotorStop   bool
+	Floor              int
+	Dirn               MotorDirection
+	State              State
+	Requests           [N_FLOORS][N_BUTTONS]ConfirmationState
+	OwnRequests        [N_FLOORS][N_BUTTONS]bool
+	Config             ElevatorConfig
+	Obs                bool
+	ObstructionFailure bool
+	MotorStop          bool
 }
 
 type ElevatorConfig struct {
@@ -115,7 +117,6 @@ func Elevio_getOutputDevice() ElevatorOutputDevice {
 		MotorDirection:     SetMotorDirection,
 	}
 }
-
 
 func Init(addr string, numFloors int) {
 	if _initialized {
@@ -291,25 +292,25 @@ func toBool(a byte) bool {
 
 // updating ConfirmationState
 func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState {
-	isPresent := map[ConfirmationState]bool{} 
+	isPresent := map[ConfirmationState]bool{}
 	for _, v := range list {
 		isPresent[v] = true
 	}
 	switch {
-	case isPresent[0] && isPresent[1] && isPresent[2]: 
-		return 1
-	case !isPresent[0]: 
-		return 2
-	case isPresent[2] && isPresent[0]: 
+	case isPresent[no_call] && isPresent[unregistered] && isPresent[registered]:
+		return unregistered
+	case !isPresent[no_call]:
+		return registered
+	case isPresent[registered] && isPresent[no_call]:
 		if wasTimedOut {
-			return 2
+			return registered
 		} else {
-			return 0
+			return no_call
 		}
-	case isPresent[0] && isPresent[1]: 
-		return 1
-	case !isPresent[1] && !isPresent[2]:
-		return 0
+	case isPresent[no_call] && isPresent[unregistered]:
+		return unregistered
+	case !isPresent[unregistered] && !isPresent[registered]:
+		return no_call
 	}
-	return 1
+	return unregistered
 }
