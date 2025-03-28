@@ -1,7 +1,7 @@
 Network module 
 ==========================================
 
-Network module responsible for UDP communication between the peers. The module is modified from handout code for the project found [here](https://github.com/TTK4145/Network-go.git).
+Network module responsible for UDP communication between the peers. The submodules `bcast`, `conn` and `peers` are modified from handout code for the project found [here](https://github.com/TTK4145/Network-go.git).
 
 Features
 ---------
