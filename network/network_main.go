@@ -1,36 +1,33 @@
 package network
 
 import (
-	"fmt"
-
 	b "github.com/TilpDatLasse/HeisLab2025/network/bcast"
-	"github.com/TilpDatLasse/HeisLab2025/network/peers"
+	p "github.com/TilpDatLasse/HeisLab2025/network/peers"
 	wv "github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
-func BroadcastWV(ch_WVTx chan wv.WorldView, udpWVPort int) {
-	b.Transmitter(udpWVPort, ch_WVTx)
+func BroadcastWV(WVTxChan chan wv.WorldView, udpWVPort int) {
+	b.Transmitter(udpWVPort, WVTxChan)
 }
 
-func RecieveWV(ch_WVRx chan wv.WorldView, udpWVPort int) {
-	b.Receiver(udpWVPort, ch_WVRx)
+func RecieveWV(WVRxChan chan wv.WorldView, udpWVPort int) {
+	b.Receiver(udpWVPort, WVRxChan)
 }
 
 func NetworkMain(id string, wvChans wv.WVChans, udpWVPort int) {
 
 	go RecieveWV(wvChans.WorldViewRxChan, udpWVPort)
 	go BroadcastWV(wvChans.WorldViewTxChan, udpWVPort)
-	go peers.UpdatePeers()
+	go p.UpdatePeers()
 
 	for {
-		p := <-peers.PeerFromUpdate
-		fmt.Printf("Peer update:\n")
-		fmt.Printf("  Peers:    %q\n", p.Peers)
-		fmt.Printf("  New:      %q\n", p.New)
-		fmt.Printf("  Lost:     %q\n", p.Lost)
+		pUpdate := <-p.PeerFromUpdate
 
-		for i := 0; i < len(p.Lost); i++ {
-			lostpeer := p.Lost[i]
+		p.PrintPeerUpdate(pUpdate)
+
+		// Functionalities for updating the world view and deleting lost peers
+		for i := 0; i < len(pUpdate.Lost); i++ {
+			lostpeer := pUpdate.Lost[i]
 			if lostpeer != id {
 				wv.InfoMapMutex.Lock()
 				delete(wv.InfoMap, lostpeer)
