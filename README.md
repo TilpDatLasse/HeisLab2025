@@ -19,11 +19,11 @@ Modules
 --------
 
 The system consists of several modules, responsible for different operations within the program. 
-Here is a short list of each modules responsibilities:
+Here is a short description of each module and their responsibilities:
 
 `elev_algo:` Runs a single elevator over TCP communication. Includes the finite state machine which is resposible for controling the elevator and handling user input and output.
 
-`HRA (Hall Request Assigner):` Decides which elevator should serve a hall order when multiple elevators are online, using a determinsitc algorithm.
+`HRA (Hall Request Assigner):` Decides which elevator should serve a hall order when multiple elevators are online, using a deterministic algorithm.
 
 `network`: Responsible for all udp communication between peers. Information transmitting and receiving are both done in this module.
 
@@ -38,7 +38,7 @@ To run the code, one will have to start either the physical elevator server or t
 
 When running the program in the terminal, you have the option to set a flag for the peer name (id), UDP ports (udpWVPort and udpPeersPort) and TCP Port (simPort) between the program and the server.
 
-To set a a flag when running the code, include -FLAGIDENTIFER=value, where FLAGIDENTIFIER is the flag that should be set and value if the value it should be set to. If no flags are set, the code will run with the standard values:
+To set a flag when running the code, include -FLAGIDENTIFER=value, where FLAGIDENTIFIER is the flag that should be set, and value is the value it should hold. If no flags are set, the code will run with the standard values:
 
 id = one
 simPort = 15657
