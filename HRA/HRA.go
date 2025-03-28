@@ -8,10 +8,14 @@ import (
 	"time"
 
 	elev "github.com/TilpDatLasse/HeisLab2025/elev_algo/elevator_io"
-	"github.com/TilpDatLasse/HeisLab2025/worldview"
+	wv "github.com/TilpDatLasse/HeisLab2025/worldview"
 )
 
-func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSync chan map[string]worldview.InformationElev, ID string) {
+func HRAMain(
+	elevatorQueueChan chan [][2]bool,
+	shouldSyncChan chan bool,
+	fromSyncChan chan map[string]wv.InformationElev,
+	ID string) {
 
 	hraExecutable := ""
 	switch runtime.GOOS {
@@ -29,17 +33,17 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 
 		time.Sleep(1000 * time.Millisecond)
 
-		ch_shouldSync <- true //Sync-request
+		shouldSyncChan <- true //Sync-request
 
-		infoMap := <-ch_fromSync //waiting for completed sync, recieving input
+		infoMap := <-fromSyncChan //waiting for completed sync, recieving input
 
-		var input worldview.HRAInput
-		input.States = make(map[string]worldview.HRAElevState)
+		var input wv.HRAInput
+		input.States = make(map[string]wv.HRAElevState)
 
 		for key := range infoMap {
 			elevstate := infoMap[key].State
 			input.States[key] = elevstate
-			input.HallRequests = hallToBool(infoMap[key].HallRequests)
+			input.HallRequests = hallToBool(infoMap[key].HallRequests) //Converting hallRequests to bool for HRA to use
 		}
 
 		if len(infoMap) > 0 {
@@ -63,7 +67,7 @@ func HRAMain(ch_elevatorQueue chan [][2]bool, ch_shouldSync chan bool, ch_fromSy
 				return
 			}
 
-			sendToElev(*output, ch_elevatorQueue, ID)
+			sendToElev(*output, elevatorQueueChan, ID)
 
 			fmt.Printf("output: \n")
 			for k, v := range *output {
