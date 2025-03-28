@@ -211,6 +211,7 @@ func GetCabOrders() {
 			bools = append(bools, value)
 
 		}
+		fmt.Println("Parsed booleans:", bools)
 		CabRequests := boolToConfirmationState(bools)
 		for i := 0; i < len(CabRequests); i++ {
 			elevator.Requests[i][2] = CabRequests[i]

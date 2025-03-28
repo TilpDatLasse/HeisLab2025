@@ -57,7 +57,6 @@ const (
 	registered   ConfirmationState = 2
 )
 
-// fra elevator
 type State int
 
 const (
@@ -85,7 +84,6 @@ type ElevatorConfig struct {
 	DoorOpenDurationS   float64
 }
 
-// fra elevator_io_device
 type ElevatorInputDevice struct {
 	FloorSensor   func() int
 	RequestButton func(ButtonType, int) bool
