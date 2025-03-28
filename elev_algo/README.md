@@ -13,7 +13,7 @@ The elevator algorithm module controls a single elevator over TCP, managing move
 The basic elevator algorithm
 ============================
 
-The elevator algorithm is based on preferring to continue in the direction of travel, as long as there are any requests in that direction. We implement this algorithm in the `request`-module. The algorithm can be described as follows:
+The elevator algorithm is based on preferring to continue in the direction of travel, as long as there are any requests in that direction. We implement this algorithm in the `requests`-module. The algorithm can be described as follows:
  - Choose direction:
    - Continue in the current direction of travel if there are any further requests in that direction
    - Otherwise, change direction if there are requests in the opposite direction
