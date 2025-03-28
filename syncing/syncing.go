@@ -14,7 +14,7 @@ type SyncChans struct {
 	SyncRequestSingleElev   chan [][2]elev.ConfirmationState
 }
 
-// recieves sync-requests from the HRA and starts the syncing process
+// Receives sync-requests from the HRA and starts the syncing process
 func SyncingMain(syncChans SyncChans) {
 	for {
 		wv.ShouldSync = <-syncChans.ShouldSync
@@ -22,7 +22,7 @@ func SyncingMain(syncChans SyncChans) {
 	}
 }
 
-// gets updated WorldViewMap from the worldview-module and passes on worldview to the HRA when all are synced
+// Gets updated WorldViewMap from the worldview-module and passes on worldview to the HRA when all are synced
 func Sync(syncChans SyncChans) {
 	for {
 		wv.CompareAndUpdateInfoMap(syncChans.SyncRequestSingleElev)
@@ -55,7 +55,7 @@ func AllWorldViewsEqual(worldViewMap map[string]wv.WorldView) bool {
 		}
 	}
 
-	// Checks if all peers have locked their worldview information before synching
+	// Checks if all peers have locked their worldview information before syncing
 	wv := worldViewMap[wv.ID]
 	for _, elev := range wv.InfoMap {
 		if elev.Locked != 2 {

@@ -52,9 +52,9 @@ const (
 type ConfirmationState int
 
 const (
-	no_call      ConfirmationState = 0
-	unregistered ConfirmationState = 1
-	registered   ConfirmationState = 2
+	NoCall      ConfirmationState = 0
+	UnConfirmed ConfirmationState = 1
+	Confirmed   ConfirmationState = 2
 )
 
 type State int
@@ -297,20 +297,20 @@ func CyclicUpdate(list []ConfirmationState, wasTimedOut bool) ConfirmationState 
 		isPresent[v] = true
 	}
 	switch {
-	case isPresent[no_call] && isPresent[unregistered] && isPresent[registered]:
-		return unregistered
-	case !isPresent[no_call]:
-		return registered
-	case isPresent[registered] && isPresent[no_call]:
+	case isPresent[NoCall] && isPresent[UnConfirmed] && isPresent[Confirmed]:
+		return UnConfirmed
+	case !isPresent[NoCall]:
+		return Confirmed
+	case isPresent[Confirmed] && isPresent[NoCall]:
 		if wasTimedOut {
-			return registered
+			return Confirmed
 		} else {
-			return no_call
+			return NoCall
 		}
-	case isPresent[no_call] && isPresent[unregistered]:
-		return unregistered
-	case !isPresent[unregistered] && !isPresent[registered]:
-		return no_call
+	case isPresent[NoCall] && isPresent[UnConfirmed]:
+		return UnConfirmed
+	case !isPresent[UnConfirmed] && !isPresent[Confirmed]:
+		return NoCall
 	}
-	return unregistered
+	return UnConfirmed
 }
