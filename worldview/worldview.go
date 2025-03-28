@@ -18,8 +18,8 @@ var (
 )
 
 var (
-	ID         string 
-	ShouldSync bool   = false
+	ID         string
+	ShouldSync bool = false
 	InfoElev   InformationElev
 )
 
@@ -73,15 +73,15 @@ func WorldViewMain(ch_WVRx chan WorldView, ch_syncRequestsSingleElev chan [][2]e
 	MyWorldView.PeerList.Id = ID
 
 	for {
-		wv := <-ch_WVRx 
+		wv := <-ch_WVRx
 		if wv.Id != "" {
 			WVMapMutex.Lock()
-			WorldViewMap[wv.Id] = wv 
+			WorldViewMap[wv.Id] = wv
 			peers.PeerToUpdate <- wv.PeerList
 			WVMapMutex.Unlock()
-			if wv.Id != ID { 
+			if wv.Id != ID {
 				InfoMapMutex.Lock()
-				InfoMap[wv.Id] = wv.InfoMap[wv.Id] 
+				InfoMap[wv.Id] = wv.InfoMap[wv.Id]
 				InfoMapMutex.Unlock()
 				CompareAndUpdateInfoMap(ch_syncRequestsSingleElev)
 				MyWorldView.Timestamp = timer.Get_wall_time()
@@ -97,7 +97,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 		peers.PeerToUpdate <- MyWorldView.PeerList
 		hasMotorStopped := Converter(fsm.FetchElevatorStatus()).MotorStop
 		hasObstructionFailure := Converter(fsm.FetchElevatorStatus()).ObstructionFailure
-		if InfoElev.Locked == 0 { 
+		if InfoElev.Locked == 0 {
 			InfoElev = Converter(fsm.FetchElevatorStatus())
 			if ShouldSync {
 				InfoElev.Locked = 1
@@ -119,7 +119,7 @@ func SetElevatorStatus(ch_WVTx chan WorldView) {
 			select {
 			case ch_WVTx <- deepCopyWV(MyWorldView):
 			default:
-				fmt.Println("Advarsel: Mistet en WorldViewmelding (kanal full)")
+				fmt.Println("Lost a worldview message --- warning")
 			}
 		}
 		time.Sleep(50 * time.Millisecond)

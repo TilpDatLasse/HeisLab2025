@@ -223,7 +223,9 @@ func GetCabOrders() {
 		}
 		for i := 0; i < len(elevator.OwnRequests); i++ {
 			if elevator.OwnRequests[i][2] {
+
 				FsmOrderInList(i, 2, true)
+
 			}
 
 		}
