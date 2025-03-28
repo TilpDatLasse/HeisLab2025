@@ -1,14 +1,9 @@
 Network module 
 ==========================================
 
-Network module responsible for UDP communication between the peers. The submodules `bcast`, `conn` and `peers` are modified from handout code for the project found [here](https://github.com/TTK4145/Network-go.git).
+Network module responsible for UDP communication between the peers. The local peer's worldveiw is broadcasted and the recieved worldviews are passed on back to the worldview module.
+The submodules `bcast`, `conn` and `peers` are modified from handout code for the project found [here](https://github.com/TTK4145/Network-go.git).
 
-Features
----------
+`bcast.go:` Handles the actual transmission and reception on the udp-network.
 
-Channel-in/channel-out pairs of (almost) any custom or built-in data type can be supplied to a pair of transmitter/receiver functions. 
-Data sent to the transmitter function is automatically serialized and broadcast on the specified port. 
-Any messages received on the receiver's port are de-serialized (as long as they match any of the receiver's supplied channel data types) and sent on the corresponding channel. 
-See [bcast.Transmitter and bcast.Receiver](bcast/bcast.go). 
-
-Peers on the local network can be detected by supplying your own ID to a broadcast transmitter and receiving peer updates (new, current, and lost peers) from the receiver. See [peers.UpdatePeers](peers/peers.go).
+`peers.go:` Keeps track of online peers, using the transmitted worldviews as a heartbeat-mechanism.
