@@ -25,11 +25,11 @@ Here is a short description of each module and their responsibilities:
 
 `HRA (Hall Request Assigner):` Decides which elevator should serve a hall order when multiple elevators are online, using a deterministic algorithm.
 
-`network`: Responsible for all udp communication between peers. Information transmitting and receiving are both done in this module.
+`network`: Responsible for all UDP communication between peers. Information transmitting and receiving are both done in this module.
 
 `syncing`: Ensures synchronization of elevator state data across all peers currently in the network. Makes sure each peer sends the same information to "their" HRA. 
 
-`worldview`: Handles the continous update of each peer's worldview. A worldview includes all relevant information about every peer that is known to this peer. Worldview update is based both on the information from the local elevator (about itself) and information recieved on the network (about other peers).
+`worldview`: Handles the continuous update of each peer's worldview. A worldview includes all relevant information about every peer that is known to this peer. Worldview update is based both on the information from the local elevator (about itself) and information recieved on the network (about other peers).
 
 How to run the program
 -----------------------
